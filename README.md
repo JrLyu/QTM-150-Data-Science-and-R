@@ -4,7 +4,7 @@ This is my class notes on the course **QTM 150** at Emory University. The full n
 ## The course description: 
 This course is an introduction to the R programming language. It will cover the programming basics of R: data types, controlling flow using loops/conditionals, and writing functions. In addition to these basics, this course will emphasize skills that are relevant for data analysis.
 
-To access the course on coursicle at <https://www.coursicle.com/emory/courses/QTM/150/>. 
+To access the course on coursicle at [QTM 150 Introduction to Statistics Computing I](https://www.coursicle.com/emory/courses/QTM/150/). 
 
 *Note: I cannot share more materials in this repository without permission from my instructor and my classmates. Hence, I will not post class materials or homework on this site unless permission is granted.*
 
