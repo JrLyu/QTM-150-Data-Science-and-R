@@ -2,7 +2,7 @@
 This is my class notes on the course **QTM 150** at Emory University. The full name of this course is **Introduction to Statistics Computing I**. This course focuses on learning the basics of R and using R for data science. It is a sequence course at the Institutes of Quantitative Method and Theory; the sequent course is QTM 151, Introduction to Statistics Computing II, focusing on introducing Python and using Python for data analysis.  
 
 ## The course description: 
-This course is an introduction to the R programming language. It will cover the programming basics of R: data types, controlling flow using loops/conditionals, and writing functions. In addition to these basics, this course will emphasize skills that are relevant for data analysis.
+This course provides an introduction to statistical computational tools for analyzing data with R. The material is selected to enable you to become proficient enough to actively implement the methods and tools in your scientific research. This will require you to practice the material outside of class. This course introduces the skills on (1) mastering the knowledge of R basic computation including understanding data types, controlling flow using loops and conditional statements, writing functions, iteration, and simulation (2) dealing with complex and messy real data and fluently reshape data into the most convenient form for analysis or reporting (3) using various informative and interactive graphics to explore and interpret data (4) gaining familiarity with basic data storage, collection, cleaning, joining, and manipulation.
 
 To access the course on coursicle at [QTM 150 Introduction to Statistics Computing I](https://www.coursicle.com/emory/courses/QTM/150/). 
 
