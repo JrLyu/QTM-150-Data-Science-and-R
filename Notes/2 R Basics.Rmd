@@ -51,7 +51,7 @@ Using `dim()` function, we can check the dimensions of our data set (i.e., how m
 dim(gss)
 ```
 
-Using 'str()\` function, we can get the strcutre of our data set.
+Using 'str()` function, we can get the structure of our data set.
 
 ```{r}
 str(gss)
