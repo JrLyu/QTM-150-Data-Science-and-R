@@ -1,0 +1,119 @@
+---
+title: "R Basics"
+author: "Jiuru Lyu"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data Basics
+
+## Import Data
+
+```{r}
+gss <- read.csv('gss.csv')
+```
+
+Using this method to import data, we need to make sure the data set is saved in the same folder with this .rmd file. This "same folder" is called the working directory.
+
+To view the data set, we can use the function `View()`. Remember R is capital-sensitive. and we have to make sure the V is capitalized
+
+```{r}
+View(gss)
+```
+
+## Functions for a Data Frame
+
+Using the `summary()` function, we can get a summary of all variables in the data frame. For numerical values, we will get basic statistical information by using the `summary()` function.
+
+```{r}
+summary(gss)
+```
+
+Using the `head()` function, we will get the first 6 rows of the data frame.
+
+```{r}
+head(gss)
+```
+
+Using the `tail()` function, in contrast, we will get the last 6 rows of the data frame.
+
+```{r}
+tail(gss)
+```
+
+Using `dim()` function, we can check the dimensions of our data set (i.e., how many observations do we have and how many variables do we have.)
+
+```{r}
+dim(gss)
+```
+
+Using 'str()\` function, we can get the strcutre of our data set.
+
+```{r}
+str(gss)
+```
+
+Using `names()` we can get the names of all variables of the data set.
+
+```{r}
+names(gss)
+```
+
+## Extract Elements form a Data Frame
+
+A data frame is a matrix, which is two dimensional, including rows and columns.
+
+-   If we want to extract elements from a data frame (which is 2 dimensional), we use `df_name[row_num, col_num]`.
+
+```{r}
+gss[1,2]
+```
+
+-   If we want to extract all rows or all columns, we just omit the argument. For example, `gss[,2]` extracts all rows in the second columns of the data frame gss.
+
+```{r}
+gss[2,]
+```
+
+-   If we want to extract a continuous range of rows or columns from the data frame, we use `:` sign. For example, `gss[1:100, 1:3]` extracts the first 100 rows and the first 3 columns of the data frame
+
+```{r}
+gss[1:100, 1:3]
+```
+
+-   If we want to extract a range of rows or columns that are not continuous, we can use the `c()` function. For example, `gss[c(2, 4, 6), c(2, 4, 5)]` extracts the second, forth, and sixth rows of the data set, as well as the second, forth, and fifth columns of the data set.
+
+```{r}
+gss[c(2, 4, 6), c(2, 4, 5)]
+```
+
+-   If we want the majority of the rows or columns, except for some columns, we can use the `-` sign. For example, `gss[-c(1, 3), -c(1, 5)]` extracts all the rows except the first and third ones and all the columns except the first and the fifth ones. gss[-c(1, 3), -c(1, 5)]
+
+```{r}
+gss[-c(1, 3), -c(1, 5)]
+```
+
+## Save Data
+
+Usually, we will first extract a small sample from a large data frame to do a try-out of our data analysis. After making sure our codes work well in the small sample, we can apply them to the large data set. After extracting a sample from the data frame, we can save it into a separate .csv file:
+
+```{r}
+gss01 <- gss[1:100, 1:3]
+
+write.csv(gss01, 'my1stsubset.csv')
+```
+
+Sometimes, we forget where is out working directory (which is where our new-written subset will be saved), we can run the code `getwd()`.
+
+```{r}
+getwd()
+```
+
+## Create a Random Sample
+```{r}
+sample(1:20, 5)
+```

@@ -1,0 +1,82 @@
+---
+title: "HW01_Jiuru Lyu"
+author: "Jiuru Lyu"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Question 1: Import the dataset "fruitfly" 
+```{r}
+fruitfly <- read.csv('fruitfly.csv')
+head(fruitfly)
+```
+
+# Question 2: Provide a simple plot to investigate the distribution of "lifespan" in the dataset.
+```{r}
+hist(fruitfly$lifespan, main='Histogram of Fruitfly Lifespan', xlab='Lifespan')
+```
+
+```{r}
+plot(fruitfly$lifespan, type = 'p', main = 'A Plot of Fruitfly Lifespan', xlab = 'Index', ylab = 'Lifespan')
+```
+
+However, the data set is grouped by type, so I also would like to generate separate plots for each type. 
+
+To do so, I firstly create sub data sets according to the types of the fruit fly: 
+```{r}
+fruitfly_type1 <- fruitfly[26:50,]
+fruitfly_type2 <- fruitfly[51:75,]
+fruitfly_type3 <- fruitfly[1:25,]
+fruitfly_type4 <- fruitfly[76:100,]
+fruitfly_type5 <- fruitfly[101:125,]
+```
+
+## Fruitfly Type1
+```{r}
+hist(fruitfly_type1$lifespan, main='Histogram of Fruitfly Lifespan - Type1', xlab='Lifespan')
+```
+```{r}
+plot(fruitfly_type1$No, fruitfly_type1$lifespan, type = 'p', main = 'A Plot of Fruitfly Lifespan - Type1', xlab = 'No', ylab = 'Lifespan')
+```
+
+## Fruitfly Type2
+```{r}
+hist(fruitfly_type2$lifespan, main='Histogram of Fruitfly Lifespan - Type2', xlab='Lifespan')
+```
+```{r}
+plot(fruitfly_type2$No, fruitfly_type2$lifespan, type = 'p', main = 'A Plot of Fruitfly Lifespan - Type2', xlab = 'No', ylab = 'Lifespan')
+```
+
+## Fruitfly Type3
+```{r}
+hist(fruitfly_type3$lifespan, main='Histogram of Fruitfly Lifespan - Type3', xlab='Lifespan')
+```
+
+```{r}
+plot(fruitfly_type3$No, fruitfly_type3$lifespan, type = 'p', main = 'A Plot of Fruitfly Lifespan - Type3', xlab = 'No', ylab = 'Lifespan')
+```
+
+## Fruitfly Type 4
+```{r}
+hist(fruitfly_type4$lifespan, main='Histogram of Fruitfly Lifespan - Type4', xlab='Lifespan')
+```
+
+
+```{r}
+plot(fruitfly_type4$No, fruitfly_type4$lifespan, type = 'p', main = 'A Plot of Fruitfly Lifespan - Type4', xlab = 'No', ylab = 'Lifespan')
+```
+
+## Fruitfly Type 5
+```{r}
+hist(fruitfly_type5$lifespan, main='Histogram of Fruitfly Lifespan - Type5', xlab='Lifespan')
+```
+
+```{r}
+plot(fruitfly_type5$No, fruitfly_type5$lifespan, type = 'p', main = 'A Plot of Fruitfly Lifespan - Type5', xlab = 'No', ylab = 'Lifespan')
+```
+
+# Question 3:Generate a HTML document of your rmd and submit on Canvas.
