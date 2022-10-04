@@ -1,0 +1,155 @@
+---
+title: "HW03"
+author: "Jiuru Lyu"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Import `gss` data set:
+```{r}
+gss <- read.csv('gss.csv')
+```
+
+# Question 1
+
+- **How many missing values for the variable marital?**
+
+```{r}
+sum(is.na(gss$marital))
+```
+
+Hence, there are 20 missing values fro the variable marital. 
+
+- **What is the percentage of female respondents (excluding missing values), try function prop.table()?**
+
+```{r}
+prop.table(table(gss$sex))
+```
+
+The percentage of female respondents is 0.5614317 (56.1%).
+
+- **What is the percentage of male respondents who felt “NOT TOO HAPPY”?**
+
+```{r}
+prop.table(table(gss$sex, gss$happy), margin = 1)
+```
+
+The percentage of male respondents who felt "NOT TOO HAPPY" is 0.1203201 (12.0%).
+
+- **What is the percentage of married respondents who age between 30 and 40 (including the boundaries)?**
+
+As `age` column is a numeric column, I need to convert it into character values before creating the prop.table. 
+```{r}
+gss$age1 <- factor(NA, levels = c("Below 30", "Between 30 and 40", "Above 40"))
+
+gss$age1[gss$age < 30] <- "Below 30"
+gss$age1[gss$age >= 30 | gss$age <=40] <- "Between 30 and 40"
+gss$age1[gss$age > 40] <- "Above 40"
+```
+
+Let's check if the factor is created correctly: 
+```{r}
+summary(gss$age1)
+```
+
+Now, we are comfortable to create our prop.table. 
+```{r}
+prop.table(table(gss$marital, gss$age1), margin = 1)
+```
+Hence, the percentage of married respondents who age between 30 to 40 (including boundaries) is 0.41880282 (41.9%). 
+
+- **What is the average age of female married respondents who took the survey from 1999 and 2010?**
+
+Firstly, we want to select the relevant data that we need. 
+```{r}
+marriedF <- gss$age[gss$sex == "FEMALE" & gss$marital == "MARRIED"]
+
+marriedF_99_10 <- marriedF[gss$year >= 1999 | gss$year <= 2010]
+```
+
+Now, we can calculate the average age. Because there are missing values, we set `na.rm = TRUE`.
+```{r}
+mean(marriedF_99_10, na.rm = TRUE)
+```
+
+Therefore, the average age of female married respondents who took the survey from 1999 and 2010 is 44.59293. 
+
+# Question 2
+
+- **Make a summary of year. What type of vector is the year variable?**
+
+```{r}
+summary(gss$year)
+```
+
+The year variable is a numeric variable. 
+
+- **It should be treated as a factor variable. Change it into a new factor variable YEAR in the gss data. Make a new summary of YEAR, which year had the most participants?**
+
+```{r}
+gss$year1 <- factor(NA, levels = as.character(c(1973:2010)))
+
+for (i in 1973:2010) {
+  gss$year1[gss$year == i] <- as.character(i)
+}
+
+summary(gss$year1)
+```
+
+To find out which year had the most participants, I would like to create a bar plot. 
+```{r}
+barplot(table(gss$year1))
+```
+
+Apparently, year 2006 had the largest number of participants, and the numbe of participants in 2006 was 4510. 
+
+- **Use the function tapply to get average age of respondents by YEAR. What years had the oldest and the youngest average age? (look up `tapply()`)**
+
+Firstly, I would like to loop up how to use the function `tapply()`. 
+```{r}
+?tapply()
+```
+
+Now, I am confident to use `tapply()`. I will now start solving this question. 
+```{r}
+tapply(gss$age, gss$year1, mean, na.rm = TRUE)
+```
+
+Hence, the year 1984 had the youngest average age, which is 44.00477, and the year 2010 had the oldest average age, which is 48.04207. 
+
+# Question 3
+
+- **Reorder the levels in degree of gss data based on the number of years in education. **
+
+Firstly, we need to conver the degree column into a factor. 
+```{r}
+gss$degree_factor <- as.factor(gss$degree)
+```
+
+Let's check the levels and the order of the levels: 
+```{r}
+levels(gss$degree_factor)
+```
+
+We want the levels in an order of the years of education, so we reorder it in the following way: 
+```{r}
+gss$degree_factor <- factor(gss$degree, levels = c("LT HIGH SCHOOL", "HIGH SCHOOL", "JUNIOR COLLEGE", "BACHELOR", "GRADUATE"))
+```
+
+Now, let's double-check the order: 
+```{r}
+levels(gss$degree_factor)
+```
+
+- **Provide the appropriate plot to visualize the distribution of the new degree variable.**
+
+The best way to visualize factor and character data is bar plot: 
+```{r}
+barplot(table(gss$degree_factor))
+```
+
+

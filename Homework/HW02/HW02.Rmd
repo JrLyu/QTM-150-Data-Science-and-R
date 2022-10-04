@@ -1,0 +1,110 @@
+---
+title: "HW02_Jiuru Lyu"
+author: "Jiuru Lyu"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Before starting solving the homework questions, I am importing the `gss` data set. The `gss` data set has been stored in the sample work directory as this .Rmd file.
+
+```{r}
+gss <- read.csv('gss.csv')
+```
+
+# Question 1
+
+***Create a small random sample of size 1000 from gss data set. (set.seed(1234)), name it "smalldat" and save/export on your current working directory.***
+
+To find exactly how many rows of data am I selecting from, I firstly find the dimension of the `gss` data set.
+
+```{r}
+dim(gss)
+```
+
+The result shows that there are 53474 rows in total, so I will get 1000 random numbers from 1 to 53474 without replacement and set them to the row numbers of extraction.
+
+```{r}
+set.seed(1234)
+
+smalldat <- gss[sample(1:53474, 1000, replace = FALSE), ]
+
+head(smalldat)
+```
+
+Now, I am saving the data into my working directory.
+
+```{r}
+write.csv(smalldat, 'smalldat.csv')
+```
+
+The `smalldat` data set is successfully saved.
+
+# Question 2
+
+***Calculate the average age of `smalldat`.***
+
+To calculate the average, we can use the `mean()` function.
+
+```{r}
+mean(smalldat$age)
+```
+
+The result is weird: R returns `NA`, indicating either there is a missing value or some data is not numeric. I suspect that there is at least a missing value in our random sample, so I run `is.na()` function to testify if any value is missing in the age column of `smalldat` data set.
+
+```{r}
+is.na(smalldat$age)
+```
+
+As indicated by the result, there are some missing values in our random sample. That explains why we cannot get a numerical value for the average mean if we do not specify the value of `na.rm` argument in the `mean()` function. To successfully finding the average age and stripping the `NA` values, I run the following code:
+
+```{r}
+mean(smalldat$age, na.rm = TRUE)
+```
+
+Now the average age is successfully calculated, ignoring the existence of the missing values. The result tells us that the average mean of our random sample is `r mean(smalldat$age, na.rm = TRUE)`.
+
+# Question 3
+
+***Provide an appropriate plot to investigate the distribution of degree of `smalldat`.***
+
+Previously, we have run the `view(smalldat)` code, and I found that the degree column in the data set is a categorical variable specifying the degree of education the responders have received. Hence, bar plot would be the most appropriate way to show the distribution of degree.
+
+Before creating the bar plot, I need to create the frequency table for the degree column first.
+
+```{r}
+degree_frequency <- table(smalldat$degree)
+
+degree_frequency
+```
+
+Using the `degree_frequency` table, I can now create the bar plot:
+
+```{r}
+barplot(degree_frequency, main = 'Bar Plot of the Degree Column in Smalldat', xlab = 'Types of Degree', ylab = 'Number of Responders')
+```
+
+# Question 4 
+
+***Calculate the percentage of married participants with bachelor degree in smalldat (among all married participants, the percentage of them with bachelor degree)?***
+
+To answer this question, a proportion contingency table is created using the `prop.table()` and `table()` functions. Because the question asks me to find "the percentage of them with bachelor degree," a column marginal proportion table is created by setting the `margin` argument equal to 1. 
+```{r}
+prop.table(table(smalldat$degree, smalldat$marital), margin = 2)
+```
+
+As the table indicates, the result of the first row and the the second column indicates the answer we are seeking, which is `r prop.table(table(smalldat$degree, smalldat$marital), margin = 2)[1, 2]` (i.e., there are 14.2% of married participants holding a bachelor degree in our random sample).
+
+# Question 5
+
+***Provide an appropriate plot to investigate the relationship between marital status and education status (degree) in smalldat.***
+
+As the martial and degree columns in our data set are all categorical variables, I need to create a bar plot to represent their relationship. In this case, I will not use the marginal proportion table anymore; rather, I will create a frequency table of two variables.
+```{r}
+barplot(table(smalldat$degree, smalldat$marital), main = 'Relationship Between Marital and Education Status in Smalldat',  xlab = 'Marital Status', ylab = 'Number of Responders', legend.text = TRUE)
+legend = c('BACHELOR','GRADUATE',' HIGH SCHOOL', 'JUNIOR COLLEGE', 'LT HIGH SCHOOL' )
+```
+

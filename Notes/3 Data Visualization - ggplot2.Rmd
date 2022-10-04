@@ -1,0 +1,432 @@
+---
+title: 'Data Visualization: ggplot2'
+author: "Jiuru Lyu"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Import package
+
+```{r}
+library(tidyverse)
+```
+
+# The Very First Attempt
+
+```{r}
+fruitfly <- read.csv('fruitfly.csv')
+
+plot(fruitfly$sleep, fruitfly$lifespan)
+```
+
+# Intorduction to ggplot2
+
+ggplot() allows us to build up a plot layer by layer.
+
+Put three important features together to draw a graph:
+
+1. data
+2. geometric objects
+3. coordinate system
+
+- Step 1:
+
+You begin a plot with the function `ggplot()`, it creates a coordinate system that we can add layers to, the first argument of ggplot() is the data to use in the graph, then complete the graph by adding one or more layers to `ggplot(data)`
+
+- Step 2:
+
+`geom_XXX()` adds a layer of geometric objects to your plot, for example `geom_point()` creates a scatterplot (many different geom functions for different types of graphs),
+
+- Step 3:
+
+each `geom_XXX()` takes a mapping argument, which is always paired with `aes()`, mapping variables to visual properties. first, mapping variables to coordinate system
+
+### Import Data Set
+```{r}
+str(diamonds)
+```
+```{r}
+summary(diamonds)
+```
+
+First, we want to make a random sample from the diamonds data set: 
+```{r}
+set.seed(922)
+
+diamonds1 <- diamonds[sample(1:53940, 1000, replace = FALSE), ]
+
+glimpse(diamonds1)
+```
+## Create the Plot
+```{r}
+ggplot(diamonds1) + 
+geom_point(aes(x = carat, y = price))
+```
+
+```{r}
+ggplot(diamonds1) + 
+  geom_point(aes(x = carat, y = price)) + 
+  labs(x = "Carat", y = "Price", title = "Figure 1:diamonds price by carat") + 
+  theme_bw()
+```
+
+If we put variables in the first line, they are called the *global variables*. Those variables will always affect the entire plot. In constrast, *local variables* are those variables we put into the `geom_XXX()` function, and they will not affect the other part of the plot (they will only affect the `geom_XXX()` layer. )
+
+In our previous example, there is no different between making `aes(x = carat, y = price)` global variables and making them local variables. 
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) + 
+  geom_point() + 
+  labs(x = "Carat", y = "Price", title = "Figure 1:diamonds price by carat") + 
+  theme_bw()
+```
+
+## Save Plots
+We can save a plot to an object. 
+```{r}
+p1 <- ggplot(diamonds1, aes(x = carat, y = price)) + 
+  geom_point() + 
+  labs(x = "Carat", y = "Price", title = "Figure 1:diamonds price by carat") + 
+  theme_bw()
+
+p1
+```
+
+## Mapping Aesthetic Arguments
+- Mapping to `size`
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) + 
+  geom_point(aes(size = cut)) + 
+  labs(x = "Carat", y = "Price", title = "Figure 1:diamonds price by carat") + 
+  theme_bw()
+```
+
+- Mapping to `shape`
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) + 
+  geom_point(aes(shape = cut)) + 
+  labs(x = "Carat", y = "Price", title = "Figure 1:diamonds price by carat") + 
+  theme_bw()
+```
+
+- Mapping to color
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) + 
+  geom_point(aes(color = cut)) + 
+  labs(x = "Carat", y = "Price", title = "Figure 1:diamonds price by carat") + 
+  theme_bw()
+```
+
+We can use multiple mappings: 
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) + 
+  geom_point(aes(shape = cut, color = cut)) + 
+  labs(x = "Carat", y = "Price", title = "Figure 1:diamonds price by carat") + 
+  theme_bw()
+```
+
+***Note***: mapping size for numeric variables,and shape for categorical variables.
+- Mapping to alpha: transparency
+```{r}
+ggplot(diamonds1)+
+  geom_point(aes(x=carat, y= price), alpha=0.1)
+```
+```{r}
+ggplot(diamonds1)+
+  geom_point(aes(x=carat, y= price, alpha=cut))
+```
+
+***Note***: color and alpha aesthetics can be mapped to either categorical variables or numeric variables. 
+
+## More Geom Functions
+- geom_line()
+- geom_smooth()
+- geom_histogram()
+- and so on
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE, formula = "y~x")
+```
+
+In the example above, `aes(x = carat, y = price)` is considered to be our global variables, so we do not need to duplicate this code over and over again very time we call those variables. However, if we change it into local variables, we need to duplicate this code many times: 
+```{r}
+ggplot(diamonds1) + 
+  geom_point(aes(x = carat, y = price)) + 
+  geom_smooth(aes(x = carat, y = price), method = "lm", se = FALSE, formula = "y~x")
+```
+
+***Example***
+We have a pre-set data set called `mtcars`, and here's a preview of it: 
+```{r}
+str(mtcars)
+```
+
+Make a scatter plot between `wt` and `mpg`, set the color to `cyl` and shape to `am`. 
+```{r}
+ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl), shape = factor(am))) + 
+  geom_point()
+```
+
+
+# Color
+
+## Three Ways to Change Colors
+- The first way: enter the color name (google ggplot color)
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) +
+  geom_point(alpha = 0.2, size = 3, shape = 6, color = "red") +    # or use number
+  labs(x = "Carat", y = "Price", title = "Figure 1:diamonds price by carat") +
+  theme_bw()
+```
+
+- The second way: combine colors 
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) +
+  geom_point(alpha = 0.2, size = 3, shape = 6, color = rgb(0.5, 0.7, 0.2)) +
+  labs(x = "Carat", y = "Price", title = "Figure 1:diamonds price by carat") +
+  theme_bw()
+```
+
+- The third way: Hex color codes (Google hex color codes)
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) +
+  geom_point(alpha = 0.2, size = 3, shape = 6, color = "#012169") +
+  labs(x = "Carat", y = "Price", title = "Figure 1:diamonds price by carat") +
+  theme_minimal()
+```
+
+## Color of Continuous Variables
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) + 
+  geom_point(aes(color = carat))
+```
+
+If we want to change the color scale, we use the `scale_color_gradient()` function. 
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) + 
+  geom_point(aes(color = carat)) + 
+  scale_color_gradient(name = "Price", low = "darkblue", high = "orange")
+```
+
+## Color of Categorical Variables
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) + 
+  geom_point(aes(color = clarity)) + 
+  scale_color_discrete(name = "Clarity")
+```
+
+If we want to change the color manually, we first need to know how many levels the variable have. 
+```{r}
+levels(diamonds$clarity)
+```
+
+Now, we use `scale_colr_manual()` to change the color scale.
+```{r}
+ggplot(diamonds1, aes(x=carat, y=price))+
+  geom_point(aes(color=clarity))+
+  scale_color_manual(name="Clarity Title", values=c("red", "darkblue","darkgreen", "grey", "grey3", "black","darkred","darkorange"))
+```
+
+# Size
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) +
+  geom_point(aes(size = carat)) +
+  scale_size(name = "Carat Size", range = c(3, 8)) +    ## edit legend about size
+  labs(x = "carat", y = "price", title = "diamonds price by carat")
+```
+
+`size` is for quantitative variables (numeric vector)
+
+# Shape
+```{r}
+is.factor(diamonds1$cut)
+```
+Since `cut` is a discrete variable, we can use it for `shape`.
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) +
+  geom_point(aes(shape = cut),color = "blue") +
+  scale_shape(name = "Cut Types") +  # edit legend about shape
+  labs(x= "carat", y = "price", title = "diamonds price by carat")
+```
+
+`shape` is for categorical variables (factor)
+
+# Alpha
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) +
+  geom_point(aes(alpha = price), color = "blue", position = 'jitter') +
+ scale_alpha(name = "Price")  #edit legend of opacity
+```
+
+`alpha` is for continuous variable (numeric vector).
+
+***Note***: `jitter` will randomly change the position of the data points slightly to show points that are overlapped. 
+```{r}
+ggplot(mtcars, aes(x = wt, y = am)) + 
+  geom_point(alpha = 0.1)
+```
+
+Some points are darker tha  other points, meaning there is a overlapping among data points. Try to use `jitter ()` to separate those overlapping. 
+```{r}
+ggplot(mtcars, aes(x = wt, y = am)) + 
+  geom_point(position = "jitter")
+```
+
+***Note***: The final plot created is misleading. 
+
+Or we can directly use the `geom_jitter()` function. In the `geom_jitter()` function, we can specify the settings of jitter. 
+```{r}
+ggplot(mtcars, aes(x = wt, y = am)) + 
+  geom_jitter(width = 0.5, height = 0.01)
+```
+
+Another way is to use `position = position_jitter()`. Using this argument in the `geom_point()` function will create the same plot as above because we can also specify settings of jitter inside `position_jitter()`.
+```{r}
+ggplot(mtcars, aes(x = wt, y = am)) + 
+  geom_point(position = position_jitter(width = 0.5, height = 0.01))
+```
+
+
+# Facet
+`facet` function will put multiple subplots in one plot. 
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) +
+  geom_point(aes(color = clarity)) +
+  facet_grid(. ~ cut)
+```
+
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) +
+  geom_point(aes(color = clarity)) +
+  facet_grid(clarity ~ cut)
+```
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) +
+  geom_point(aes(color = clarity)) +
+  facet_wrap(. ~ cut)
+```
+```{r}
+ggplot(diamonds1, aes(x = carat, y = price)) +
+  geom_point(aes(color = clarity)) +
+  facet_wrap(clarity ~ cut)
+```
+
+# Add Labels
+```{r}
+ggplot(mpg, aes(cty, hwy)) + 
+  geom_point(alpha = 0.7, size = 7, position = "jitter", aes(color = cty)) + 
+  geom_text(aes(label = factor(cyl)), 
+            color = "white", size = 3, 
+            vjust = 1.5, position = position_dodge(0.3), 
+            check_overlap = TRUE)
+```
+
+# Other Types of Plots
+
+## Bar Plot
+```{r}
+ggplot(diamonds1, aes(x = cut)) + 
+  geom_bar()
+```
+```{r}
+ggplot(diamonds1, aes(x = cut)) + 
+  geom_bar(aes(fill = clarity))
+```
+```{r}
+ggplot(diamonds1, aes(x = cut)) + 
+  geom_bar(aes(fill = clarity), position = "dodge")
+```
+
+Use the `stat_count()` geom function, we will get exactly the same plot. In `ggplot2`, each specific geometric symbol has an unique specific statistical transformation. 
+```{r}
+ggplot(diamonds1, aes(x = cut)) + 
+  stat_count(aes(fill = clarity), position = "dodge")
+```
+
+
+## Boxplot, Histogram, Density, and Line Graphs
+1. Boxplot is for one quantitative v.s. one categorical 
+```{r}
+ggplot(diamonds1, aes(x = cut, y = price)) +
+  geom_boxplot(aes(col = clarity))
+```
+
+2. Histogram is for one quantitative variable
+```{r}
+ggplot(diamonds1, aes(price)) +
+  geom_histogram(bins = 10)
+```
+
+3. Density is also for one quantitative variable
+```{r}
+ggplot(diamonds1, aes(price)) +
+  geom_density(aes(color = clarity))
+```
+
+4. We can add lines to time series data
+```{r}
+?economics 
+```
+```{r}
+ggplot(economics, aes(x = date, y = unemploy)) +
+  geom_line()
+```
+
+# Statistical transformations
+
+```{r}
+ggplot(diamonds1, aes(x=cut))+
+  geom_bar() 
+```
+
+**Each unique geometric object has an unique corresponding statistical transformation**
+
+The previous code is the same as the following: 
+```{r}
+ggplot(diamonds1, aes(x=cut))+
+  stat_count()
+```
+
+```{r}
+prop.table(table(diamonds$cut))
+```
+```{r}
+demo <- tribble(
+  ~cut,         ~prop,
+  "Fair",       0.0298, 
+  "Good",       0.0909,
+  "Very Good",  0.2239,
+  "Premium",    0.2555,
+  "Ideal",      0.3995
+)
+```
+
+If we run
+```
+ggplot(demo, aes(x = cut, y = prop)) + 
+  geom_bar()
+```
+in R, we will get an error because the geom function `geom_bar()` only accept one variable input. Here, we need to add a `stat="identity"` argument in `geom_bar()`
+```{r}
+ggplot(demo, aes(x = cut, y = prop)) + 
+  geom_bar(stat = "identity")
+```
+
+The previous code is equivalent to the following: 
+```{r}
+ggplot(demo, aes(x = cut, y = prop)) + 
+  geom_col()
+```
+
+`geom_col()` required two variable input, so the previous code can run without any error and any additional argument input. 
+
+We can sue `coord_flip()` to flip the coordinate.  
+```{r}
+ggplot(demo, aes(x = cut, y = prop)) + 
+  geom_col() + 
+  coord_flip()
+```
