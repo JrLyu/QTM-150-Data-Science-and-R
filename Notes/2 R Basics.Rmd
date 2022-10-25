@@ -1,0 +1,1162 @@
+---
+title: "R Basics"
+author: "Jiuru Lyu"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data Basics
+
+## Import Data
+
+```{r}
+gss <- read.csv('gss.csv')
+```
+
+Using this method to import data, we need to make sure the data set is saved in the same folder with this .rmd file. This "same folder" is called the working directory.
+
+To view the data set, we can use the function `View()`. Remember R is capital-sensitive. and we have to make sure the V is capitalized
+
+```{r, echo=FALSE}
+View(gss)
+```
+
+## Functions for a Data Frame
+
+Using the `summary()` function, we can get a summary of all variables in the data frame. For numeric values, we will get basic statistical information by using the `summary()` function.
+
+```{r}
+summary(gss)
+```
+
+Using the `head()` function, we will get the first 6 rows of the data frame.
+
+```{r}
+head(gss)
+```
+
+Using the `tail()` function, in contrast, we will get the last 6 rows of the data frame.
+
+```{r}
+tail(gss)
+```
+
+Using `dim()` function, we can check the dimensions of our data set (i.e., how many observations do we have and how many variables do we have.)
+
+```{r}
+dim(gss)
+```
+
+Using `str()` function, we can get the strcture of our data set.
+
+```{r}
+str(gss)
+```
+
+Using `names()` we can get the names of all variables of the data set.
+
+```{r}
+names(gss)
+```
+
+## Extract Elements form a Data Frame
+
+A data frame is a matrix, which is two dimensional, including rows and columns.
+
+-   If we want to extract elements from a data frame (which is 2 dimensional), we use `df_name[row_num, col_num]`.
+
+```{r}
+gss[1,2]
+```
+
+-   If we want to extract all rows or all columns, we just omit the argument. For example, `gss[,2]` extracts all rows in the second columns of the data frame gss.
+
+```{r}
+gss[2,]
+```
+
+-   If we want to extract a continuous range of rows or columns from the data frame, we use `:` sign. For example, `gss[1:100, 1:3]` extracts the first 100 rows and the first 3 columns of the data frame
+
+```{r, echo=FALSE}
+str(gss[1:100, 1:3])
+```
+
+-   If we want to extract a range of rows or columns that are not continuous, we can use the `c()` function. For example, `gss[c(2, 4, 6), c(2, 4, 5)]` extracts the second, forth, and sixth rows of the data set, as well as the second, forth, and fifth columns of the data set.
+
+```{r}
+gss[c(2, 4, 6), c(2, 4, 5)]
+```
+
+-   If we want the majority of the rows or columns, except for some columns, we can use the `-` sign. For example, `gss[-c(1, 3), -c(1, 5)]` extracts all the rows except the first and third ones and all the columns except the first and the fifth ones.
+
+```{r, echo=FALSE}
+str(gss[-c(1, 3), -c(1, 5)])
+```
+
+## Save Data
+
+Usually, we will first extract a small sample from a large data frame to do a try-out of our data analysis. After making sure our codes work well in the small sample, we can apply them to the large data set. After extracting a sample from the data frame, we can save it into a separate .csv file:
+
+```{r, echo=FALSE}
+gss01 <- gss[1:100, 1:3]
+
+write.csv(gss01, 'my1stsubset.csv')
+```
+
+Sometimes, we forget where is out working directory (which is where our new-written subset will be saved), we can run the code `getwd()`.
+
+```{r}
+getwd()
+```
+
+## Create a Random Sample
+
+```{r}
+sample(1:20, 5)
+```
+
+There is an argument called `replace`, and the default value of it is `FALSE`, meaning we are creating a random sample without replacement (each element from the random sample is unique). If you want to create a random sample WITH replacement (after selecting an element, put it back and then select another - you might get repetitive elements in the random sample), specify the value to `TRUE` by including `replace = TRUE`.
+
+```{r}
+sample(1:20, 5, replace = TRUE)
+```
+
+# Vector
+
+In R, almost everything is a vector. All elements (values) of a vector must be in the same type.
+
+Vector, including list, factor, matrix, data frame, are called objects in R.
+
+## Numeric Vectors
+
+A numeric vector is a list of numbers. Integer and double vectors are known collectively as numeric vectors. (Doubles represent floating point numbers that can not always be precisely represented with a fixed amount of memory.)
+
+The `c()` function is used to create a vector.
+
+```{r}
+a <- c(1, 2, 3)
+a
+```
+
+The sign `:` creates a continuous list from the starting number ot the ending number with a step of 1.
+
+```{r}
+x <- c(1:10)
+x
+```
+
+You can also create a numeric vector in descending order:
+
+```{r}
+y <- c(30:1)
+y
+```
+
+We can use the square bracket (`[]`) to extract elements from the vector.
+
+```{r}
+x[5]
+```
+
+```{r}
+x[c(3:7)]
+```
+
+```{r}
+x[3:7]
+```
+
+The minus sign (`-`) tells R the index numbers of the elements that we do not want to extract.
+
+```{r}
+x[-c(1, 3, 5, 7, 9)]
+```
+
+### Common Functions for Numeric Vectors: `seq()`, `rep()`, and `sample()`
+
+Using the `seq()` function, we can create a sequence from a starting number to an ending number with a specified step. If the step is not specified, the step is set to `1` by default. The syntax of `seq()` is:
+
+    seq(starting, ending, by = step)
+
+```{r}
+# Create a sequence from 0 to 100 by a step of 5.
+seq(0, 100, by = 5)
+```
+
+```{r}
+# Get all odd numbers ranged from 1 to 20.
+seq(1, 20, by = 2)
+```
+
+```{r}
+# If we omit the `by` argument, we will create a sequence with a step of 1
+seq(1, 20)
+```
+
+Using the `rep()` function (the repeat function), you can specify the object you want to repeat and the number of times you want to repeat. The syntax goes by:
+
+    rep(x, times of repetition)
+
+```{r}
+# Repeat 2 fir 5 times: 
+rep(2, 5)
+```
+
+```{r}
+# Even more complicated objects can be repeated: 
+x <- (1:5)
+y <- (10:15)
+  # Repeat the vector `c(x,y)` twice
+rep(c(x,y), 2)
+```
+
+Using the `sample()` function, we can get a random sample for the specified vector. THe syntax goes by:
+
+    sample(vector, sample size, replace = TRUE/FALSE)
+
+`TRUE` and `FALSE` can be simplified into `T` and `F`.
+
+```{r}
+sample(1:10, 3, replace = F)
+```
+
+If we use `set.seed()` with a number, we are fixing the starting point to get a random sample. In other words, it allows us the get the same sample when the code is executed each time. We can put any numbers in the `set.seed()`.
+
+Different numbers in the `set.seed()` will leads to different random samples chosen; however, once the number in the `set.seed()` is fixed, we will only get one unique random sample each time we run the code.
+
+```{r}
+set.seed(344)
+
+sample(1:10, 3, replace = F)
+```
+
+***Example*** Select 1000 random rows from the `gss` data set. Because we want to make sure we get the same 100 random rows each time we run this data set, we use `set.seed()` to fix the random sample
+
+```{r}
+# Before we start collecting a random sample, we want to now how many rows do we have in this data set. 
+dim(gss)
+```
+
+```{r}
+# We can also use nrow() to only get the row number. 
+nrow(gss)
+```
+
+```{r}
+set.seed(1)
+random_sample <- gss[sample(1:53474, 100, replace = FALSE), ]
+
+head(random_sample)
+```
+
+The average age in the random sample: `r mean(random_sample$age)`.
+
+### Arithmetic Operators for Numeric Vectors
+
+```{r}
+x <- c(1:5)
+x
+```
+
+For example, if we write `x*2`, each element in `x` will be multiplied by 2.
+
+```{r}
+x*2
+```
+
+```{r}
+# Find the sqaure of x
+x^2
+```
+
+***Example*** We want to find how many years have passed since people in the `gss` data set have taken the survey.
+
+```{r}
+year_passed <- 2022 - gss$year
+
+head(year_passed)
+```
+
+We can also used other operators such as `%%` to find the quotient if the numerator is divided by the denominator.
+
+```{r}
+x %% 7
+```
+
+If two vectors have the same size, we can plus or minus them.
+
+```{r}
+y <- c(6:10)
+
+x + y
+```
+
+We can also apply simple statistical functions to the vector.
+
+```{r}
+sum(random_sample$age)
+```
+
+```{r}
+mean(random_sample$age)
+```
+
+```{r}
+length(random_sample$age)
+```
+
+### Plots of Numeric Vectors
+
+If we only have one variable, we can create box plot or histograms using `boxplot()` and `hist()`, respectively.
+
+```{r}
+hist(random_sample$age)
+```
+
+```{r}
+boxplot(random_sample$age)
+```
+
+If we have two quantitative variables, we will use scatter plot to present them. The syntax goes by:
+
+    plot(x, y)
+
+```{r}
+plot(trees$Girth, trees$Height) 
+# The data set trees is pre-set into R. 
+```
+
+## Character Vector
+
+Vectors can be made up of strings of characters instead of numbers.
+
+```{r}
+schoolyear <- c('Freshman', 'Sophomore', 'Junior', 'Senior')
+
+schoolyear
+```
+
+We can give the names to the numeric vector with the character vector by using the `name()` function. The syntax goes by:
+
+    names(numeric_vector) <- character_vector
+
+```{r}
+year <- c(1, 2, 3, 4)
+
+names(year) <- schoolyear
+
+year
+```
+
+### Common Functions for Character Vectors
+
+There are two basic operations you might want to perform on character vectors: `substr()` and `paste()`.
+
+The syntax of `substr()` goes by:
+
+    substr(vector, start, end)
+
+where `vector` is the vector of characters(strings), and `start` and`*stop` say which characters to keep.
+
+```{r}
+substr(schoolyear, 1, 2)
+```
+
+The other function `paste()` is used to build up strings by concatenation.
+
+```{r}
+schoolyear1 <- paste(schoolyear, 'Year')
+
+schoolyear1
+```
+
+If you want to separate the text string, you can specify the `sep` argument. Some common choices for the `sep` argument are `" "` and `"/"`.
+
+```{r}
+paste('The', schoolyear, 'Year', sep = '/')
+```
+
+Another common function is `tolower()` and `toupper()`. Those are functions to convert the text strings into upper case and lower case.
+
+```{r}
+tolower(schoolyear)
+```
+
+***Example*** There is a pre-set data set in R called `state.name`.
+
+```{r}
+state.name
+```
+
+1.  Use `tolower` or `toupper` to convert the state names into lower cases.
+
+```{r}
+tolower(state.name)
+```
+
+2.  Extract the first letter of the state names.
+
+```{r}
+substr(state.name, 1, 1)
+```
+
+### Plots of Character Vector / Categorical Variable
+
+We can use the `table()` function to create a frequency table. The frequency table is the approach to summarize character vectors.
+
+```{r}
+table(random_sample$region)
+```
+
+```{r}
+table(random_sample$sex)
+```
+
+We can use `prop.table()` to calculate the percentage of each category in the categorical variable. The syntax goes by:
+
+    prop.table(frequency_table))
+
+If we did not have a frequency table, we need to put the `table()` function inside the the `prop.table()` function. For example:
+
+```{r}
+prop.table(table(random_sample$sex))
+```
+
+The suitable plot to present categorical variables, we should use a bar plot. The syntax goes by:
+
+    barplot(frequency_table)
+
+In a bar plot, the $x$-axis will be the category, and the $y$-axis will be the frequency.
+
+```{r}
+barplot(table(random_sample$region))
+```
+
+We can also create the plot using the proportion frequency table:
+
+```{r}
+barplot(prop.table(table(random_sample$sex)))
+```
+
+If we have two categorical variables, we will create the **contingency table**. To create a contingency table, we will also use the `table()` function, but with different syntax:
+
+    table(x, y)
+
+where `x` and `y` are two different categorical variables.
+
+```{r}
+table(random_sample$sex, random_sample$marital)
+```
+
+Usually, the first categorical variable will be presented vertically on the left, and the second categorical variable will be presented horizontally on the top.
+
+Again, we can also use `prop.table()` to create a proportion contingency table.
+
+```{r}
+prop.table(table(random_sample$sex, random_sample$marital))
+```
+
+However, `prop.table()` will only give as the overall proportion (or total proportion). Sometimes, we want the margin proportion, so we need to specify the value of argument `margin` in the `prop.table()`.
+
+If `margin = 1`, we are creating a row marginal proportion table. In a row marginal proportion table, the sum of the row is calculated first, and the proportion of each character variable is calculated in relating to the row sum.
+
+```{r}
+prop.table(table(random_sample$sex, random_sample$marital), margin = 1)
+```
+
+If we set `margin = 2`, a column marginal proportion table is created. In a column marginal proportion table, the sum of the column is first calculated, and then the proportion of each character variable is calculated with respect the the column sum.
+
+```{r}
+prop.table(table(random_sample$sex, random_sample$marital), margin = 2)
+```
+
+If you want to calculate the row total and the column total, we should use the `marginSum()` function.
+
+    marginSum(frequency_table, margin = 1)
+
+If the `margin` is set to `1`, we are calculating the row total. If the `margin` is set to `2`, we are calculating the column total.
+
+```{r}
+marginSums(table(random_sample$sex, random_sample$marital), margin = 1)
+```
+
+```{r}
+marginSums(table(random_sample$sex, random_sample$marital), margin = 2)
+```
+
+To visualization, we will also use the `barplot()` function.
+
+```{r}
+barplot(table(random_sample$sex, random_sample$marital))
+```
+
+The argument `col` is used to set the color of the plot.
+
+```{r}
+barplot(table(random_sample$sex, random_sample$marital), col=c('red', 'green'))
+```
+
+## Logical Vector
+
+There are only two values for a logical vector - `TRUE` or `FALSE`. It is often necessary to test relations when programming. R allows testing of equality and inequality relations using the relational operators:
+
+1.  greater than: `>`,
+2.  less than: `<`,
+3.  equality: `==`,
+4.  inequality: `!=`, `>=`, `<=`,
+5.  matching: `%in%`.
+
+For example,
+
+```{r}
+x <- c(1:5)
+
+x > 3
+```
+
+```{r}
+3 == 4
+```
+
+```{r}
+schoolyear %in% "Senior"
+```
+
+As long as the vector matches one value after the `%in%` sign, R will return TRUE:
+
+```{r}
+schoolyear %in% c("Freshman", "Junior")
+```
+
+In R, `TRUE` has an internal value of `1`, and `FALSE` has an internal value of `0`. For example, we can sum up a logical vector.
+
+```{r}
+sum(x > 3)
+```
+
+The logical vectors can also be used to extract subsets by *logical expression*. R will only extract the data with the `TRUE` logical value.
+
+```{r}
+gss_subset <- gss[gss$year == 2010,]
+
+head(gss_subset)
+```
+
+```{r}
+schoolyear[substr(schoolyear, 1, 1) == "S"]
+```
+
+```{r}
+substr(state.name, 1, 1) == "M"
+```
+
+```{r}
+state.name[substr(state.name, 1, 1) == "M"]
+```
+
+The logical operators are very useful to get a subset by *subset()*. This function will create the same subsets that we created in the previous section.
+
+```{r}
+subset(schoolyear, substr(schoolyear, 1, 1) == "S")
+```
+
+```{r}
+head(subset(gss, year == 2010))
+```
+
+```{r}
+head(subset(gss, gss$year %in% c(1978, 1984, 2000, 2002, 2004)))
+```
+
+### Boolean Operations
+
+The Boolean operations can be encoded in R.
+
+1.  *and*: `&`
+2.  *or*: `|`
+3.  *not*: `!`
+
+```{r}
+x <- c(1:20)
+
+x
+```
+
+```{r}
+x1 <- subset(x, x > 10 & x == 12)
+
+x1
+```
+
+```{r}
+x2 <- x[x <= 5 | x > 14]
+x2
+```
+
+```{r}
+head(gss[gss$year == 2010 | gss$year == 1986, ])
+```
+
+### The `is.XXX()` Functions
+
+`is.na()` and `!is.na()` is used to detect the missing values in the data set.
+
+```{r}
+x <- c(1, 3, 4, NA, 5)
+
+is.na(x)
+```
+
+```{r}
+sum(!is.na(x))
+```
+
+```{r}
+sum(is.na(gss$marital))
+```
+
+```{r}
+sum(is.na(gss$region))
+```
+
+```{r}
+sum(is.na(gss$age))
+```
+
+To calculate mean values of a data set with NAs, we can use the following code:
+
+```{r}
+mean(gss$age, na.rm = TRUE)
+```
+
+The argument `na.rm=TRUE` tells R to omit NAs when calculating the mean.
+
+We can use other `is.vectortype()` vector to check the type of the vector.
+
+1.  Check if the vector is a character vector: `is.character()`
+2.  Check if the vector is a numeric vector: `is nemeric()`
+
+```{r}
+is.character(gss$region)
+```
+
+```{r}
+is.numeric(gss$income)
+```
+
+# Factors
+
+The data frames in R use *factors* to store categorical variables with numeric levels. labels + numbers. `factor()` is used to create a new factor. `is.XXX()` and `class()` are used to check specific type, `as.XXX()` is used to cast vectors to specific type.
+
+```{r}
+schoolyear<-c("Freshman","Sophomore","Freshman","Sophomore","Senior","Freshman","Sophomore","Junior")
+
+class(schoolyear)
+```
+
+```{r}
+schoolyear_factor <- as.factor(schoolyear)
+
+class(schoolyear_factor)
+```
+
+By using `levels()` we can check the level order of the the factor. The default order of levels is in alphabetic order.
+
+```{r}
+levels(schoolyear_factor)
+```
+
+Now, we can convert a factor to a numeric vector. R will use the level number to convert the factor into a numeric vector.
+
+```{r}
+schoolyear_number <- as.numeric(schoolyear_factor)
+
+schoolyear_number
+```
+
+The way we treat a factor is the same as a character vector.
+
+```{r}
+table(schoolyear)
+```
+
+By using either the character vector or the factor, we will get exactly the same bar plots.
+
+```{r}
+barplot(table(schoolyear))
+```
+
+```{r}
+barplot(table(schoolyear_factor))
+```
+
+## Reorder the levels of the factor.
+
+However, the alphabetic order sometimes is not what we want (For instance, in our `schoolyear` example). So, we need to reorder the levels of the factor. The syntax of reordering the levels is the following:
+
+    newvector <- factor(vector, levels = c("level1", "level2", "level3", "level4"))
+
+```{r}
+schoolyear_factor <- factor(schoolyear, levels = c("Freshman", "Sophomore", "Junior", "Senior"))
+
+levels(schoolyear_factor)
+```
+
+```{r}
+barplot(table(schoolyear_factor))
+```
+
+## Reorder a factor / Re-assign levels to a factor
+
+```{r}
+levels(factor(gss$happy))
+```
+
+We see there are levels called "DK" and some blank space in gas happy column. This refers to "don't know", but we want to change it into NA. - *Step 1*: Creating a new variable by copying the original one, making changes on the new one, so that we don't change the original data. - *Step 2*: Create a new factor.
+
+```{r}
+gss$happy1 <- factor(gss$happy, levels = c("NOT TOO HAPPY", "PRETTY HAPPY", "VERY HAPPY"))
+```
+
+Now, we will assign levels into the new column
+
+```{r}
+gss$happy1[gss$happy == "NOT TOO HAPPY"] <- "NOT TOO HAPPY"
+gss$Happy1[gss$happy == "PRETTY HAPPY"] <- "PRETTY HAPPY"
+gss$happy1[gss$happy == "VERY HAPPY"] <- "VERY HAPPY"
+# Now, we will deal with those missing data: 
+gss$happy1[gss$happy == " " | gss$happy == "DK"] <- NA
+
+levels(gss$happy1)
+```
+
+```{r}
+barplot(table(gss$happy))
+```
+
+```{r}
+barplot(table(gss$happy1))
+```
+
+## Create a binary factor - use the `ifelse()` function
+
+We can use `ifelse()` function to create a binary factor. The syntax goes by:
+
+    ifelse(condition, What to do when TRUE, What to do when FALSE)
+
+```{r}
+gss$happy2 <- factor(ifelse(gss$happy == "VERY HAPPY" | gss$happy == "PRETTY HAPPY", "HAPPY", "NOT HAPPY"))
+# We will assign "HAPPY" only to "VERY HAPPY" and assign "NOT HAPPY" to the other conditions. 
+
+table(gss$happy)
+table(gss$happy2)
+```
+
+## Convert a numeric vector to a factor
+
+In the gss data set, the only numeric vector is the age column. Let's try to convert age into factors with levels.
+
+```{r}
+summary(gss$age)
+is.numeric(gss$age)
+```
+
+```{r}
+gss$age1 <- factor(NA, levels = c("youth", "adult", "senior")) 
+# Creating a factor using NA, we are creating an empty factor. 
+
+gss$age1[gss$age <= 21] <- "youth"
+gss$age1[gss$age > 21 & gss$age <= 65] <- "adult"
+gss$age1[gss$age > 65] <- "senior"
+
+table(gss$age1)
+```
+
+```{r}
+barplot(table(gss$age1))
+```
+
+You can also change a vector back into numeric ***Example*** Let's now change `gss$age1` back to numeric vectors.
+
+```{r}
+levels(gss$age1)
+```
+
+```{r}
+gss$age2 <- factor(gss$age1, levels = c("18", "40", "70"))
+
+gss$age2[gss$age1 == "youth"] <- "18"
+gss$age2[gss$age1 == "adult"] <- "40"
+gss$age2[gss$age1 == "senior"] <- "70"
+
+levels(gss$age2)
+```
+
+As seen from the code before, now our `age2` column is still a factor with levels. To convert a factor into a numeric vector, we need to change it into character first and then change ti into numeric vector. To change the type of a vector, we can use the `as.XXX()` function.
+
+```{r}
+gss$age2 <- as.numeric(as.character(gss$age2))
+
+mean(gss$age2, na.rm = T)
+```
+
+***Example***: Change income to numeric
+
+```{r}
+table(gss$income)
+```
+
+First, let's convert the income into a factor.
+
+```{r}
+gss$income1 <- factor(gss$income)
+
+levels(gss$income1) <- c("2000", "12500", "17500", "22500", "25000", "3500", "4500", "5500", "6500", "7500", "9000", NA,   "1000", NA)
+
+table(gss$income1)
+```
+
+After converting it into a factor, we will convert into numeric vector:
+
+```{r}
+gss$income1 <- as.numeric(as.character(gss$income1))
+
+mean(gss$income1, na.rm = T)
+```
+
+***Note***: in a vector, all the elements should belong to the same data type.
+
+# Object
+
+Objects in R can be one of the following cases: - matrix: - array - data frame - list
+
+All objects in R consist of one or more vectors.
+
+## Matrix
+
+To create a matrix, we use the `matrix` function.
+
+```{r}
+a.matrix <-matrix(
+  c(1, 2, 3, 4, 5, 6, 7, 8, 9), # data elements
+  nrow = 3, # number of rows
+  ncol = 3, # number of columns
+  byrow = T # fill by row or by column
+)
+
+a.matrix
+```
+
+All elements in a matrix should be in the same data type.
+
+We can use `dim()` to check the dimension of a matrix:
+
+```{r}
+dim(a.matrix)
+```
+
+### Extract Elements from a Matrix
+
+We can use `[row, column]` to extract elements from a matrix:
+
+```{r}
+a.matrix[2, 3]
+```
+
+```{r}
+a.matrix[1, ]
+```
+
+```{r}
+a.matrix[, 3]
+```
+
+```{r}
+a.matrix[, c(1,3)]
+```
+
+### Naming Row and Columns
+
+We can assign names to the rows and columns by using the following functions: - `colnames()` - `rownames()` - `dimnames()`
+
+```{r}
+colnames(a.matrix) <- c("row1", "row2", "row3")
+
+a.matrix
+```
+
+```{r}
+rownames(a.matrix) <- c("col1", "col2", "col3")
+
+a.matrix
+```
+
+```{r}
+dimnames(a.matrix) <- list(
+  c("Row 1", "Row 2", "Row 3"),
+  c("Col 1", "Col 2", "Col 3")
+)
+
+a.matrix
+```
+
+### Matrix Calculations
+
+1.  Finding the transpose of a matrix: `T`
+
+```{r}
+B <-  matrix( 
+  c(2, 4, 3, 1, 5, 7), 
+  nrow = 3, 
+  ncol = 2
+)
+```
+
+```{r}
+t(B)
+B
+```
+
+2.  Combine matrices: `cbind()` and `rbind()`
+
+```{r}
+C <- matrix(
+  c(7, 4, 2, 1, 5, 3), 
+  nrow = 3, 
+  ncol = 2,
+  byrow = T
+)
+
+cbind(B, C)
+```
+
+```{r}
+rbind(t(B), t(C))
+```
+
+The `cbind()` and `rbind()` functions also work for data frames.
+
+3.  Sum of the row and columns of a matrix: `rowSums()` and `colSums()`
+
+```{r}
+rowSums(B)
+```
+
+```{r}
+colSums(B)
+```
+
+4.  Matrix Multiplication: `%*%`
+
+```{r}
+t(C) %*% B
+```
+
+Remember, the row number of the first matrix should be the same as the column number of the second matrix
+
+```{r}
+B %*% t(C)
+```
+
+5.  Inverse of a Matrix: `solve()`
+
+```{r}
+D <- matrix(
+  c(2, 0, 0, 2), 
+  nrow = 2,
+  ncol = 2
+)
+
+D
+
+solve(D)
+```
+
+If we multiply the inverse of a matrix and itself, we will get the identity matrix:
+
+```{r}
+D %*% solve(D)
+```
+
+6.  Element-wise calculation:
+
+```{r}
+B + C
+```
+
+In this case, the [1,1] element in B is directly added to the [1,1] element in C.
+
+```{r}
+B - C
+```
+
+```{r}
+B * C
+```
+
+If we do not use `%*%`, matrix multiplication will not be performed; rather, a element-wise multiplication will be performed.
+
+```{r}
+B / C
+```
+
+Element-wise calculation can include constant numbers.
+
+```{r}
+B + 2
+```
+
+```{r}
+B * 2
+```
+
+```{r}
+B / 2
+```
+
+## Array
+
+An array can be a three-dimensional object.
+
+Arrays are the R data objects which can store data in more than two dimensions. For example, if we create an array of dimension (2, 3, 4), then it creates 4 rectangular matrices each with 2 rows and 3 columns. All matrices in an array should be in the same size.
+
+```{r}
+an.array <- array(0, dim = c(2, 2, 3))
+
+an.array
+```
+
+We can also give names to the rows, columns, and matrices to an array.
+
+```{r}
+vector1 <- c(5, 9, 3)
+vector2 <- c(10, 11, 12, 13, 14, 15)
+column.names <- c("COL1", "COL2", "COL3")
+row.names <- c("ROW1", "ROW2", "ROW3")
+matrix.names <- c("Matrix1", "Matrix2")
+
+# Take these vectors as input to the array.
+a <- array(
+  c(vector1,vector2),
+  dim = c(3,3,2), 
+  dimnames = list(row.names, column.names, matrix.names)
+)
+
+a
+```
+
+### Extract Elements from an Array
+
+    array[row, column, matrix]
+
+```{r}
+a[3, 2,1]
+```
+
+```{r}
+a[3, ,1]
+```
+
+```{r}
+a[1,3,]
+```
+
+### The `apply()` Function
+
+    apply(x = array, margin, fun)
+
+```{r}
+# Sum up all the rows for the two matrices
+apply(a, 1, sum) 
+```
+
+```{r}
+# Sum up all the columns for the two matrices
+apply(a, 2, sum)
+```
+
+The function `tapply()` will return a table.
+
+```{r}
+table <- tapply(gss$age, factor(gss$year), mean, na.rm = T)
+
+table
+```
+
+## Data Frames
+
+A data frame is a two-dimensional (rows and columns) object (like a matrix).
+
+-   each column must be of the same data type, but data type may vary by column
+
+-   all columns have the same length
+
+-   observations are rows, variables are columns
+
+-   use a `as.data.frame()` function to convert matrices to data frames
+
+```{r}
+a.matrix <- matrix(3, nrow = 2, ncol = 2)
+a.matrix
+```
+```{r}
+a.dataframe <- as.data.frame(a.matrix)
+a.dataframe
+```
+
+## List
+
+A list is a set of objects(store arbitrary collections of different types of objects). Each element in a list can be a(n):
+
+- vector 
+
+- matrix
+
+- array
+
+- data frame
+
+- list
+
+```{r}
+a.vec <- c(6:10)
+a.matrix <- matrix(3, nrow = 2, ncol = 2)
+a.dataframe <- as.data.frame(a.matrix)
+a.list <- list(a.vec, a.matrix, a.dataframe)
+
+a.list
+```
+
+To extract elements from a list, we need to use `[[]]`.
+```{r}
+a.list[[1]]
+```
+
+Use `lapply`, `sapply` for lists. 
+```{r}
+x <- list(a = 1:10, beta = exp(-3:3), logic = c(FALSE, FALSE, TRUE))
+
+x
+```
+
+1. `lapply` will return a list: 
+```{r}
+lapply(x, mean)
+```
+```{r}
+lapply(x, quantile)
+```
+
+2. `sapply` returns the result in vector
+```{r}
+sapply(x, quantile, 0.7)
+```

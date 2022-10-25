@@ -1,0 +1,717 @@
+---
+title: "Data Manipulation - dplyr"
+author: "Jiuru Lyu"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Import Data Set and Packages
+```{r}
+gss <- read.csv("newgss.csv")
+```
+```{r}
+library(tidyverse)
+library(babynames)
+```
+
+
+# `dplyr` Introduction
+
+`dplyr` provides simple *verbs*, functions that correspond to the most common data manipulation tasks, to help you translate your thoughts into code.
+
+`dplyr` aims to provide a function for each basic verb of data manipulation:
+
+- filter() to select cases based on their values.
+- arrange() to give cases/observations a specific order
+- select() to select variables based on their names.
+- mutate() to add new variables that are functions of existing variables.
+- group_by() to split the data frame into pieces based on some variables.
+- summarize() to condense multiple values to a single value.
+
+*split-apply-combine*: A common analytical pattern is to split data frame into pieces, apply some function to each pieces, and combine the results back together again to a new data frame. 
+
+All verbs work similarly:
+1. The first argument is a data frame;
+2. The subsequent arguments describe what to do with the data frame, using the variable names (without quotes);
+3. The result is a new data frame
+
+## The Pipe Operator: `%>%`
+Pipes take the output from one function and feed it to the first argument of the next function.
+Instead of nesting functions (reading from the inside to the outside), the idea of of piping is to read the functions from left to right.
+
+## The `filter()` Verb
+
+We use `filter()` to select cases/observations/rows based on their values.
+```{r}
+# Select all the respondents in 2000
+gss %>%
+  filter(year == 2000) %>%
+  head()
+```
+```{r}
+# Select all the respondents in 2000 and 2001
+gss %>%
+  filter(year == 2000 | year == 2001) %>%
+  head()
+```
+```{r}
+# Select all the respondents in 2000 and 2001 who are married
+gss %>%
+  filter(year == 2000 | year == 2001, marital == "MARRIED") %>%
+  head()
+```
+
+We can store our data using the assign operator: 
+```{r}
+married_00_01 <- gss %>%
+  filter(year == 2000 | year == 2001, marital == "MARRIED")
+```
+
+## The `arrange()` Verb
+`arrange()` reorders the observations by their values of a variable.
+
+```{r}
+gss %>%
+  arrange(age) %>%
+  head()
+```
+
+The default order for `arrange()` is ascending order. To see descending order, we use `desc()`.
+```{r}
+gss %>%
+  arrange(desc(age)) %>%
+  head()
+```
+
+We can also arrange the data frame using two or more variables. Usually, the first variable entered will be given the higher priority when arranging.
+```{r}
+gss %>%
+  arrange(desc(age), year) %>%
+  head()
+```
+
+
+`filter()` and `arrange()` work on **observations/rows**
+
+## The `select()` Verb
+We use `select()` to select variables based on their names.
+```{r}
+gss %>%
+  select(year, age, marital) %>%
+  head()
+```
+```{r}
+gss %>%
+  select(3:7) %>%
+  head()
+```
+```{r}
+gss %>%
+  select(-c(finrela)) %>%
+  head()
+```
+
+## The `mutate()` Verb
+
+`mutate()` creates new variables/columns or alters pre-existing variables/columns
+```{r}
+gss %>%
+  mutate(
+    var1 = income1 / age
+  ) %>%
+  head()
+```
+
+If we only want to show the new variable we create, we can use `transmute()`
+```{r}
+gss %>%
+  transmute(var1 = income1 / age) %>%
+  head()
+```
+
+`select()` and `mutate()` work on **variables/columns** 
+
+## The `summarize()` Verb
+We use `summarize()` to get a summary of variables/columns
+```{r}
+gss %>%
+  summarize(
+    AvgAge = mean(age, na.rm = TRUE),
+    AvgIncome = mean(income1, na.rm = TRUE)
+  )
+```
+
+## Use Pipe
+```{r}
+gss %>%
+  select(year, income1, age, sex) %>%
+  filter(year == 2000, sex == "MALE") %>%
+  arrange(age) %>%
+  mutate(var1= income1 / age) %>%
+  head()
+```
+```{r}
+gss %>%
+  filter(year == 2000, marital == "MARRIED") %>%
+  select(3:6) %>%
+  arrange(desc(age)) %>%
+  summarize(Avg = mean(age, na.rm = T))
+```
+
+## The `group_by()` Verb
+
+`group_by()` splits the entire dataframe according to the groups. 
+```{r}
+gss %>%
+  group_by(sex) %>%
+  summarize(Avg = mean(age, na.rm = T))
+```
+
+*split-apply-combine*: split data frame into groups, apply some function to each group, and combine the results back together again to a new data frame. 
+
+***Example***: Create a ggplot to visualize the trend of average income1 for different sex over years.
+```{r}
+gss %>%
+  group_by(sex, year) %>%
+  summarize(
+    AvgIncome = mean(income1, na.rm = T)
+  ) %>%
+  ggplot(aes(x = year, y = AvgIncome, color = sex)) + 
+    geom_line() + 
+    xlab("Year") + 
+    ylab("Average Income") + 
+    ggtitle("Average Income Over Years, Grouped by Sex") + 
+    theme_bw()
+```
+
+***Example***: Get the average of all respondents each year and visualize it
+```{r}
+gss %>%
+  group_by(year) %>%
+  summarize(AveAge = mean(age, na.rm = TRUE)) %>%
+  ggplot(aes(x = year, y = AveAge)) + 
+    geom_line() + 
+    theme_bw()
+```
+
+# `dplyr` Review
+
+## `gss` Data Set
+
+***Exercise 1***: For the `gss` data, get the percent of married respondents by year, Get a plot to visualize the marital status by year.
+
+$\boxed{\text{Method 1}}$
+```{r}
+gss %>%
+  group_by(year) %>%
+  summarize(prec = sum(marital == "MARRIED", na.rm = TRUE) / sum(!is.na(marital))) %>%
+  head()
+```
+
+$\boxed{\text{Method 2}}$
+```{r}
+gss %>%
+  group_by(year) %>%
+  summarize(prec = prop.table(table(marital))[2]) %>%
+  ggplot(aes(x = year, y = prec)) + 
+    geom_line()
+```
+
+***Exercise 2***: For the `gss` data, get a data about the percent of married respondents and average age of respondents by year, then provide a plot to visualize the relation between age and marital status by year.
+```{r}
+gss %>%
+  group_by(year) %>%
+ summarize(prec = prop.table(table(marital))[2], 
+           AvgAge = mean(age, na.rm = TRUE)) %>%
+  ggplot(aes(x = year, y = AvgAge, size = prec, color = prec)) + 
+    geom_point()
+
+```
+
+***Exercise 3***: For the `gss` data, find the percent of respondents with \$25,000 or more by party affiliation and year.
+```{r}
+gss %>%
+  group_by(partyid, year) %>%
+  summarize(prec = sum(income == "$25000 OR MORE", na.rm = TRUE) / sum(!is.na(income)) * 100) %>%
+  head()
+```
+
+***Exercise 4***: What is the "richest" region? - does it change over the years?
+
+$\boxed{\text{Method 1}}$
+```{r}
+gss %>%
+  group_by(year, region) %>%
+  summarize(AvgIncome = mean(income1, na.rm = TRUE)) %>%
+  filter(AvgIncome == max(AvgIncome)) %>%
+  ggplot(aes(x = year, y = AvgIncome, color = region, size = region)) +
+    geom_point()
+```
+
+$\boxed{\text{Method 2}}$
+```{r}
+gss %>%
+  group_by(year, region) %>%
+  summarize(AvgIncome = mean(income1, na.rm = TRUE)) %>%
+  group_by(year) %>%
+  summarize(riches = max(AvgIncome), 
+            region = region[which.max(AvgIncome)]) %>%
+  ggplot(aes(x = year, y = riches, color = region, size = region)) +
+    geom_point()
+```
+
+***Extension***: Which region has the lowest income in the year of 1980? 
+```{r}
+gss %>%
+  group_by(year, region) %>%
+  summarize(AvgIncome = mean(income1, na.rm = TRUE)) %>%
+  group_by(year) %>%
+  summarize(riches = min(AvgIncome), 
+            region = region[which.min(AvgIncome)]) %>%
+  filter(year == 1980)
+```
+
+## `babynames` Data Set
+
+```{r}
+str(babynames)
+```
+```{r}
+summary(babynames)
+```
+
+***Exercise 5*** Create a new variable to see the rank of names from the most popular to the least popular.
+```{r}
+babynames %>%
+  mutate(rank = min_rank(n)) %>%
+  arrange(desc(rank)) %>%
+  head()
+```
+Note: `min_rank()` ranks the variable from the minimum to the maximum (i.e., the one with the lowest value is ranked number 1. )
+
+***Extension*** Find the most popular name in 2017. 
+```{r}
+babynames %>%
+  mutate(rank = min_rank(n)) %>%
+  arrange(desc(rank)) %>%
+  filter(year == 2017)
+```
+
+***Exercise 6*** For `babynames` data set, visualize the trend of born children population over years.
+```{r}
+babynames %>%
+  group_by(year) %>%
+  summarize(total = sum(n)) %>%
+  ggplot(aes(x = year, y = total)) +
+    geom_line()
+```
+
+***Exercise 7*** Find the number of unique names in the year 2017. 
+```{r}
+babynames %>%
+  group_by(name) %>%
+  filter(year == 2017) %>%
+  summarize(total = sum(n)) %>%
+  count(name) %>%
+  filter(n == 1) %>%
+  summarize(total = sum(n))
+```
+
+Note: `count(variable) = group_by(variable) %>% summarize(n())` (the number of observations in each group). `n()` is the number observations in each group. `count()` is different from `sum(numeric variable)`. 
+
+***Exercise 8*** Provide an appropriate to visualize the top 5 popular names for both girl and boy.
+
+$\boxed{\text{Method 1}}$
+```{r}
+babynames %>%
+  group_by(sex, name) %>%
+  summarize(total = sum(n)) %>%
+  top_n(5) %>%
+  ggplot(aes(x = name, y = total)) +
+    geom_bar(stat = "identity", aes(fill = sex))
+```
+Note: `geom_col() = geom_bar(stat = "identity")`
+
+$\boxed{\text{Method 2}}$
+```{r}
+babynames %>%
+  group_by(sex, name) %>%
+  summarize(total = sum(n)) %>%
+  top_n(5) %>%
+  ggplot(aes(x = name, y = total)) +
+    geom_bar(stat = "identity") + 
+    facet_grid(.~sex, scale = "free")
+```
+
+***Exercise 9*** The top 5 most popular names in 2000, see their trend over years
+Finding the 5 most popular names in 2000: 
+```{r}
+namesIn2000 <- babynames %>%
+  filter(year == 2000) %>%
+  group_by(name) %>%
+  summarize(total = sum(n)) %>%
+  top_n(5) %>%
+  select(name)
+```
+
+Converting `namesIn2000` to vector. 
+```{r}
+as.vector(namesIn2000)
+
+class(as.vector(namesIn2000))
+
+class(as.vector(namesIn2000)[[1]])
+```
+
+Complete the exercise
+```{r}
+babynames %>%
+  filter(name %in% namesIn2000[[1]]) %>%
+  group_by(year, name) %>%
+  summarize(total = sum(n)) %>%
+  ggplot(aes(x = year, y = total, color = name)) + 
+    geom_line()
+```
+
+# Join
+
+## Pakcage: nycflights13
+
+We will use the `nycflights13` package to learn about relational data. `nycflights13` contains four data tables that are related to the main `flights` table:
+
+```{r}
+library(nycflights13)
+```
+
+The `flights` data set is the main data set. 
+```{r}
+head(flights)
+```
+
+Relational data sets: 
+
+- `plane`connects to the main data set via a single variable `tailnum`
+```{r}
+head(planes)
+```
+
+- `airports` connects to the main data setvia two variables `dest` = `faa`
+```{r}
+head(airports)
+```
+
+- `airlines` connects to the main data set through the `carrier` variable 
+```{r}
+head(airlines)
+```
+
+- `weater` connects to the main data set via `origin`, `year`, `month`, `day`, and `hour`
+```{r}
+head(weather)
+```
+
+## Definitions
+
+The variables used to connect each pair of tables are called *keys*. A key is a variable (or set of variables) that uniquely identifies an observation.
+
+A *primary key* variable uniquely identify each observation
+
+***Example*** syaing each `tailnum` only has one observation (`tailnum` is the primary key variable in planes) is equivalent to say that `tailnum` is the foreign key in flights (uniquely identifies an observation in another table)
+```{r}
+planes %>%
+  group_by(tailnum) %>%
+  summarize(amount = n()) %>%
+  filter(amount != 1)
+```
+
+- `n()` is to calculate the number of occurrences of each observation
+
+- `count()` is to calculate the number of occurrences of each observation, the same as the below ```group_by()+summarize(n())```
+```{r}
+planes %>%
+  count(tailnum) %>%
+  filter(n != 1)
+```
+
+## Joins
+In `dplyr` there are two types of join functions, mutating joins and filtering joins.
+
+To learn the two types of joins, we will use the following data set: 
+```{r}
+band <- tribble(
+   ~name,     ~band,
+  "Mick",  "Stones",
+  "John", "Beatles",
+  "Paul", "Beatles"
+)
+
+
+instrument <- tribble(
+    ~name,   ~plays,
+   "John", "guitar",
+   "Paul",   "bass",
+  "Keith", "guitar"
+)
+
+instrument1 <- tribble(
+    ~artist,   ~plays,
+   "John", "guitar",
+   "Paul",   "bass",
+  "Keith", "guitar"
+)
+```
+
+
+### Mutating Joins
+
+```XXX_join(x, y, by = "key variable")```
+
+-   join y to x, x is the primary data set
+
+-   mutate new variables in x by copying different variables in y
+
+-   return a new data set
+
+-   `XXX_join(x, y, by = c("key variable1", "key variable2"))`: A key is a variable that uniquely identifies an observation, otherwise, we need multiple variables to identify an observation
+
+1. *Left join*: `left_join(x, y, by = "key variable")` keeps all the observations (rows) in x
+```{r}
+left_join(band, instrument, by = "name")
+```
+
+2. *Right join*: `right_join(x, y, by = "key")` keep all the observations (rows) in y
+```{r}
+right_join(band, instrument, by = "name")
+```
+
+Use can use `setequal` to test if two data sets are identitical.
+
+3. *Inner join*: `inner_join()` keeps all the observations in **both** x and y: 
+```{r}
+inner_join(band, instrument, by = "name")
+```
+
+Be careful when using `inner_join` because we will lose information in this case. 
+
+4. *Full join*: `full_join()` keeps **all** observations in x and y: 
+```{r}
+full_join(band, instrument, by = "name")
+```
+
+### Filtering Joins
+
+1. *Semi join*: `semi_join(x,y, by="key")` keeps all the observations of x that have a match in y: 
+```{r}
+semi_join(band, instrument, by = "name")
+```
+
+***Exercise***: Use `right_join`, `left_join`, `filter()`, `select()` to get the same dataset above with `semi_join()`
+
+Note: we can check the code line by line to see what to do next. 
+
+$\boxed{\text{Method 1}}$
+```{r}
+band %>%
+  left_join(instrument, by = "name") %>%
+  filter(!is.na(plays)) %>%
+  select(name, band)
+```
+
+$\boxed{\text{Method 2}}$
+```{r}
+band %>%
+  right_join(instrument, by = "name") %>%
+  filter(!is.na(band)) %>%
+  select(name, band)
+```
+
+```{r}
+flights %>%
+  count(dest) %>%
+  top_n(10)
+```
+
+2. *Anti Join*: `anti_join(x,y, by="key")` drops all the observations of x that have a match in y. `anti_join()` also provides a great way to diagnose joins that go wrong.
+
+***Example***: Use an anti_join() to return the rows of artists for which you don't have any instrument info.
+```{r}
+anti_join(band, instrument, by = "name")
+```
+
+## Set Operations
+
+When two data sets contain the same variables and each variable is used in the key: we can use the folloing set operations: 
+
+- `union(band, instrument)`:  these two data sets have different variables
+
+In the following set operations requires `data_set1` and `data_set2` have the same variables
+
+-` intersect(data_set1, data_set2)`
+
+- `setdiff(data_set1, data_set2)`: observations in the `data_set1` but not the `data_set2`
+
+- `setequal()`:  check two data sets with the same observations in any order
+
+- `identical()`:  check two data sets with the same observations in the same order
+
+- `cbind()`: Add more variables
+
+- `rbind()`: Add more rows to a data set. 
+
+The following two operations are exactly the same as the two above, but they are faster to use. 
+
+- `bind_cols()`  
+
+- `bind_rows()`
+
+***Example***
+```{r}
+band1 <- tribble(
+  ~name, ~surname,
+  "John",   "Lennon",
+  "Paul",   "McCartney",
+  "George", "Harrison", 
+  "Ringo",  "Starr"
+)
+
+band2 <- tribble(
+   ~name,     ~surname,
+  "Mick",    "Jagger",
+  "Keith",   "Richards",
+  "Charlie", "Watts",
+  "Ronnie",  "Wood"
+)
+```
+
+Combine band1 and band2: 
+```{r}
+bind_rows(band1, band2)
+```
+
+```{r}
+rbind(band1, band2)
+```
+
+- Add a new column to indicate which observations (rows) are from: 
+```bind_rows(label names for observations in new column, .id=column names for new column)```
+
+```{r}
+bind_rows(Beatles=band1, Stones=band2, .id="band")
+```
+
+## Examples in the `nycflight13` Package
+***Example 1***: How many flights without airline information in the airlines? 
+```{r}
+anti_join(flights, airlines, name = "carrier")
+```
+
+Because we got 0 rows from the code above, all the flights in the `flights` data set have information in the `airline` data set. 
+
+***Extension***: Swtich the order: 
+```{r}
+airlines %>%
+  anti_join(flights, name = "carrier")
+```
+
+We still get 0 rows, which means all information in the airlines has information in the flights. Hence, the flights and airlines data sets are exactly matched. 
+
+How many different airlines in the flights and airlines?
+
+$\boxed{\text{Method 1}}$
+```{r}
+flights %>%
+  count(carrier)
+```
+
+We get 16 rows, so there are 16 different ariline carriers. 
+
+$\boxed{\text{Method 2}}$
+```{r}
+flights %>%
+  summarize(n_distinct(carrier))
+```
+
+***Example 2***: How many flights without airport information in the airport? 
+```{r}
+flights %>%
+  anti_join(airports, by = c("dest" = "faa")) %>%
+  summarize(n_distinct(dest))
+```
+
+**Note: in the flights data set, the variable `dest` corresponds to the `faa` variable in the airports data set. So, we need to use `by = c('var1' = 'var2')` in the joins. **
+
+What are these airports?
+```{r}
+flights %>%
+  anti_join(airports, by = c("dest" = "faa")) %>%
+  count(dest)
+```
+
+Hence, the four airports are BQN, PSE, SJU, and STT. 
+
+***Example 3***: Find the top 10 popular airports in flights. 
+```{r}
+flights %>%
+  count(dest) %>%
+  top_n(10)
+```
+
+***Extension***: If we want the results to be sorted: 
+```{r}
+flights %>%
+  count(dest) %>%
+  arrange(n) %>%
+  top_n(10)
+```
+
+```{r}
+flights %>%
+  count(dest, sort = T) %>%
+  head(10)
+```
+**Note: Here, we can directly use `head(10)` to select the first 10 rows because the data set has already been sorted. **
+
+How many different airlines have flight to those top 10 destinations? 
+```{r}
+top10_dest <- flights %>%
+  count(dest) %>%
+  top_n(10)
+```
+```{r}
+flights %>%
+  semi_join(top10_dest, by = "dest") %>%
+  summarize(n_distinct(carrier))
+```
+
+Hence, there are 13 carriers having flights to those top 10 destinations. 
+
+***Example 4***: Find the top 5 popular names shared by girls and boys each year. 
+```{r}
+babynames %>%
+  count(year, name) %>%
+  filter(n == 2) %>% # Find the names that are shared by both girls and boys each year. 
+  select(year, name) %>%
+  left_join(babynames, by = "name") %>% # Join with the original data set, and then find the top 5 names. 
+  group_by(year.x, name) %>%
+  summarize(total = sum(n)) %>%
+  top_n(5)
+```
+
+Connecting flights and planes to find how many distinct airplanes in flights that don’t have information in planes?
+
+```{r}
+flights %>%
+  anti_join(planes, by = "tailnum") %>%
+  summarize(n_distinct(tailnum))
+```
+
+

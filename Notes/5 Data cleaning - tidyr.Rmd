@@ -1,0 +1,271 @@
+---
+title: "5 Data cleaning - tidyr"
+author: "Jiuru Lyu"
+date: '`r Sys.Date()`'
+output: 
+  html_document: 
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction to `tidyr`
+```{r}
+library(tidyverse)
+```
+
+
+The `tidyr` package helps tidy up messy data sets.
+
+There are three interrelated rules which make a data set tidy:
+
+-   Each variable must have its own column
+
+-   Each observation must have its own row
+
+-   Each value must have its own cell
+
+There are four key functions in the `tidyr` package, `pivot_longer()`, `pivot_wider()`, `separate()`, `unite()`.
+
+
+# Pivoting
+
+There are two common problems in a untidy dataset:
+
+-   One variable might be spread across multiple columns.
+
+-   One observation might be scattered across multiple rows.
+
+To fix these problems, you will need the two most important functions in tidyr: `pivot_longer()` and `pivot_wider()`.
+
+## `pivot_longer()`
+
+A common problem is a data set where some of the column names are not names of variables, but *values* of a variable.
+
+`tibble` is very similar to `data.frame`, which is better to read a large data set.
+```{r}
+table1 <- tibble(
+  `country` = c("Afghanistan","Brazil","China"),
+  `1999`    = c(19987071, 172006362, 1272915272),
+  `2000`    = c(20595360, 174504898, 1280428583)
+)
+
+table1
+```
+
+```{r}
+table2 <- tibble(
+  `country` = c("Afghanistan","Brazil","China"),
+  `1999`    = c(745, 37737, 212258),
+  `2000`    = c(2666, 80488, 213766)
+)
+
+table2
+```
+
+To tidy a data set like `table1` and `table2`, we need to pivot the offending columns into a new pair of variables, it makes "wide" data longer.
+
+Template:
+
+```
+pivot_longer(dataset,
+              a set of columns = "The set of columns whose names are values, not variables", 
+              names_to = "The name of the variable to move the column names to", 
+              values_to = "The name of the variable to move the column values to"
+            )
+```
+
+```{r}
+table1 %>%
+  pivot_longer(c("1999", "2000"), names_to = "year", values_to = "population")
+```
+
+```{r}
+table2 %>%
+  pivot_longer(c("1999", "2000"), names_to = "year", values_to = "case")
+```
+
+`pivot_longer()` makes datasets longer by increasing the number of rows and decreasing the number of columns relatively.
+
+## `pivor_wider()`
+
+`pivot_wider()` is the opposite of `pivot_longer()`. We use it when an observation is scattered across multiple rows. `pivot_longer()` makes wide tables narrower and longer, and `pivot_wider()` makes long tables shorter and wider.
+
+```{r}
+table3<- tibble(
+  `country` = c("Afghanistan", "Afghanistan", "Afghanistan", "Afghanistan", "Brazil", "Brazil", "Brazil", "Brazil","China", "China","China", "China"),
+  `year`    = c(1999,1999,2000,2000,1999,1999,2000,2000,1999,1999,2000,2000),
+  `type`    = c("case", "population","case", "population","case", "population","case", "population","case", "population","case", "population"),
+  `count`   = c(745, 19987071, 2666, 20595360, 37737, 172006362, 80488, 174504898, 212258, 1272915272, 213766, 1280428583)
+)
+
+table3
+```
+
+Template: 
+
+```
+pivot_wider(dataset, 
+              names_from = "the column to take variable names from", 
+              values_from = "the column to take values from"
+            )
+```
+
+```{r}
+table3 %>%
+  pivot_wider(names_from = "type", values_from = "count")
+```
+
+# Separate and Unit
+
+`separate()` pulls apart one column into multiple columns, `unite()` is the inverse of `separate()`.
+
+```{r}
+table4<-tibble(
+  `country` = c("Afghanistan", "Afghanistan", "Brazil", "Brazil","China", "China"),
+  `year`    = c(1999,2000,1999,2000,1999,2000),
+  `rate`    = c("745/19987071", "2666/20595360", "37737/172006362", "80488/174504898", "212258/1272915272", "213766/1280428583")
+)
+
+table4
+```
+
+## `separate()`
+
+Template: 
+```
+separate(dataset, old variable, into = c("",""), sep = "")
+```
+
+You can separate by a notation, such as `/`, `,`, etc. 
+```{r}
+table4 %>%
+  separate(rate, into = c("case", "population"), sep = "/")
+```
+
+You can also separate according to the position (count from the left): 
+```{r}
+table4 %>%
+  separate(rate, into = c("case", "population"), sep = 2)
+```
+
+## `separate()` and `unite()`
+```{r}
+library(nycflights13)
+```
+
+```{r}
+flights %>%
+  separate(time_hour, into = c("date1", "hour1"), sep=" ") %>% # from left-most
+  head(10)
+```
+
+```
+unite(dataset, new variable, a sets of existing columns)
+```
+```{r}
+flights %>%
+  unite(date, year, month, day) %>%
+  head(10)
+```
+
+```{r}
+flights %>%
+  unite(date, year,month, day) %>%
+  separate(time_hour, into=c("date1","hour1"), sep=10) %>% # from left-most
+  head(10)
+```
+
+# Missing Values
+```{r}
+stocks <- tibble(
+  year   = rep(c(2015,2016), each=4),
+  qtr    = rep(c(1,2,3,4), 2),
+  return = c(1.88, 0.59, 0.35, NA, NA, 0.92,0.17, 2.66)
+)
+
+stocks
+```
+
+We can use `na.omit()` to make missing values implicit
+```{r}
+stocks %>%
+  na.omit()
+```
+
+We can use `complete()` to make missing values explicit
+```{r}
+stocks %>%
+  na.omit() %>%
+  complete(year, qtr)
+```
+
+We can also use `fill` to fill the missing values with the most recent non missing vlaue. 
+```{r}
+stocks %>%
+  fill(return)
+```
+
+
+# Examples
+***Example 1***: 
+```{r}
+stocks1 <- tibble(
+  `half` = c(1,2),
+  `2015` = c(1.88, 0.59),
+  `2016` = c(0.92, 0.17)
+)
+
+stocks1
+```
+
+```{r}
+stocks1 %>%
+  pivot_longer(c("2015", "2016"), names_to = "year", values_to = "return")
+```
+
+***Example 2***: 
+```{r}
+cases <- tribble(
+  ~Country, ~"2011", ~"2012", ~"2013",
+      "FR",    7000,    6900,    7000,
+      "DE",    5800,    6000,    6200,
+      "US",   15000,   14000,   13000
+)
+
+cases
+```
+
+```{r}
+cases %>%
+  pivot_longer(c("2011":"2013"), names_to = "year", values_to = "cases")
+```
+
+
+***Example 3***: 
+```{r}
+pollution <- tribble(
+       ~city, ~size, ~amount,
+  "New York", "large",      23,
+  "New York", "small",      14,
+    "London", "large",      22,
+    "London", "small",      16,
+   "Beijing", "large",     121,
+   "Beijing", "small",     121
+)
+
+pollution
+```
+
+```{r}
+pollution %>%
+  pivot_wider(names_from = "size", values_from = "amount")
+```
+
+
+
