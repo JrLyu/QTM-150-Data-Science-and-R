@@ -1,0 +1,261 @@
+---
+title: "6 Dealing with Categorical Variables - forcats"
+author: "Jiuru Lyu"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Loading Packages and Data Sets
+```{r}
+library(tidyverse)
+```
+
+```{r}
+glimpse(gss_cat)
+```
+
+
+
+## Introudciton to `forcasts`
+
+This package provides some tools for working with categorical variables (factors)
+
+***Example***: find the relation between religions and average hours of watching tv.
+
+```{r}
+relig_summary <- gss_cat %>%
+  na.omit(tvhours) %>%
+  group_by(relig) %>%
+  summarize(avg = mean(tvhours))
+  
+ggplot(relig_summary, aes(x = relig, y = avg)) + 
+  geom_bar(stat = "identity") + 
+  coord_flip()
+```
+
+How could we interpret the plot without overall pattern? i.e., can we re-arrange this plot so that it is in descending or scending order? 
+
+## `fct_reorder()`
+
+Reordering the levels of a factor using `fct_reorder()`.
+
+`fct_reorder()` takes three arguments:
+
+- f, the factor whose levels you want to modify.
+
+- x, a numeric vector that you want to use to reorder the levels.
+
+- Optionally, fun, a function used if there are multiple values of x for each value of f. The default value is median.
+
+```
+fct_reorder(cat, numeric)
+```
+
+```{r}
+relig_summary %>%
+  ggplot(aes(x = avg, y = fct_reorder(relig, avg))) +
+    geom_col()
+```
+
+We can use fact_rev to reverse the order of the factor. 
+```
+fct_rev(fct_reorder(cat, numeric))
+```
+
+We can also use pip: 
+```
+fct_reorder(cat, numeric) %>% fct_rev()
+```
+
+```{r}
+relig_summary %>%
+  ggplot(aes(x = avg, y = fct_reorder(relig, avg) %>% fct_rev())) + 
+    geom_col()
+```
+
+## `fct_relevel`
+
+Now, we want to alwasy keep `Don't know` at the bottom of our plot, no matter we are using ascending or descending order. 
+
+You can use `fct_relevel()`. It takes a factor, f, and then any number of levels that you want to move to the front of the line (the bottom of the plot).
+
+```f
+ct_relevel(cat, "level", after=)
+```
+
+```{r}
+relig_summary %>%
+  ggplot(aes(x = avg, y = relig %>% fct_reorder(avg) %>% fct_relevel("Don't know", after = 0))) + 
+    geom_col()
+```
+
+## `fct_infreq()`
+
+You can use `fct_infreq()` to order levels in increasing frequency: this is the simplest type of reordering because it does not need any extra variables. You may want to combine with `fct_rev()`.
+
+
+Note in the following graph, marital is not ordered. 
+```{r}
+gss_cat %>%
+  ggplot(aes(x = marital)) + 
+    geom_bar()
+```
+
+Using `fact_infreq()`, we can make it ordered
+```{r}
+gss_cat %>%
+  ggplot(aes(x = fct_infreq(marital))) + 
+    geom_bar()
+```
+
+We can use `sort()` to creat a basic R plot that is ordered. 
+```{r}
+barplot(sort(table(gss_cat$marital)))
+```
+
+To reverse the order, we can combined `fct_infreq()` with `fct_rev()`.
+```{r}
+gss_cat %>%
+  ggplot(aes(x = marital %>% fct_infreq() %>% fct_rev())) + 
+    geom_bar()
+```
+
+## `fct_recode`
+
+***Example***: Find the relation between party affiliation and average hours of watching tv.
+
+```{r}
+gss_cat %>%
+  group_by(partyid) %>%
+  summarize(avg = mean(tvhours, na.rm = T))
+```
+
+But it is still hard to answer the question because the `partyid` is not clearly defined. We need to recode factor `fct_recode()`
+
+Let's check the levels of `partyid` first: 
+```{r}
+levels(factor(gss_cat$partyid))
+```
+
+Now, we can change the levels using `fct_recode()`: 
+```
+fct_recode(cat, )
+```
+
+```{r}
+gss_cat %>%
+  drop_na(tvhours) %>%
+  mutate(partyidnew = fct_recode(partyid,
+    "Republican, strong"    = "Strong republican",
+    "Republican, weak"      = "Not str republican",
+    "Independent, near rep" = "Ind,near rep",
+    "Independent, near dem" = "Ind,near dem",
+    "Democrat, weak"        = "Not str democrat",
+    "Democrat, strong"      = "Strong democrat",
+    "Other"                 = "No answer",
+    "Other"                 = "Don't know",
+    "Other"                 = "Other party")) %>%
+  group_by(partyidnew) %>%
+  summarize(avg = mean(tvhours, na.rm = T))
+  
+```
+
+## `fct_collapse()`
+
+If you want to collapse a lot of levels, `fct_collapse()` is a useful variant of `fct_recode()`. For each new variable, you can provide a vector of old levels:
+
+```{r}
+gss_cat %>%
+  mutate(partyidnew = fct_collapse(partyid,
+    other = c("No answer", "Don't know", "Other party"),
+    rep = c("Strong republican", "Not str republican"),
+    ind = c("Ind,near rep", "Independent", "Ind,near dem"),
+    dem = c("Not str democrat", "Strong democrat")
+  ))  %>%
+  group_by(partyidnew) %>%
+  summarize(avg = mean(tvhours, na.rm = T))
+```
+
+## `fct_lump()`
+
+Sometimes you just want to lump together all the small groups to make a plot or table simpler. That is the job of `fct_lump()`.
+
+```{r}
+gss_cat %>%
+  mutate(relignew = fct_lump(relig)) %>%
+  count(relignew)
+```
+
+but we have probably over collapsed:
+
+```{r}
+gss_cat %>%
+  mutate(relignew = fct_lump(relig,n=5)) %>%
+  count(relignew)
+```
+
+## `case_when`
+
+```{r}
+mtcars %>%
+  mutate (
+    transmission =
+      case_when(
+        am==0 ~ "automatic",
+        am==1 ~ "manaul"
+      )
+  ) %>%
+  head(10)
+```
+
+```{r}
+mtcars %>%
+  mutate (
+    gear_char =
+      case_when(
+        gear==3 ~ "three",
+        gear==4 ~ "four",
+        gear==5 ~ "five"
+      )
+  ) %>%
+  head(10)
+```
+
+```{r}
+starwars %>%
+  select(name:mass, gender, species) %>%
+  mutate(
+    type = case_when(
+      height > 200 | mass > 200 ~ "large",
+      species == "Droid"        ~ "robot",
+      TRUE                      ~ "other"
+    )
+  ) %>%
+  head(10)
+```
+
+***Example***: For gss_cat, create a plot to look at how average age varies across income level (rincome) with the order.
+```{r}
+gss_cat %>%
+  drop_na(age) %>%
+  mutate(rincome = fct_recode(rincome,
+    "other" = "No answer", 
+    "other" = "Don't know", 
+    "other" = "Refused", 
+    "other" = "Not applicable",
+  )) %>%
+  group_by(rincome) %>%
+  summarize(avg = mean(age)) %>%
+  ggplot(aes(x = avg, y = rincome %>% fct_reorder(avg) %>% fct_relevel("other", after = 0))) +
+    geom_col() + 
+    labs(
+      x = "Income Levels",
+      y = "Average Age",
+      title = "Average Age for Different Income Levels for gss_cat Data Set"
+    )
+```
+
