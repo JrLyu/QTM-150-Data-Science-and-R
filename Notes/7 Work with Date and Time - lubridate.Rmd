@@ -1,0 +1,234 @@
+---
+title: "7 Work with Date and Time - lubridate"
+author: "Jiuru Lyu"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Importing Packages
+```{r}
+library(tidyverse)
+library(nycflights13)
+library(lubridate)
+```
+# `lubridate`
+
+This lab will focus on the `lubridate` package, which makes it easier to work with dates and times in R.
+
+- Date: 
+```{r}
+today() 
+```
+
+- Date-time
+```{r}
+now()
+```
+
+There are usually two ways you are likely to create a date/time:
+
+1. From a string: Use the `lubridate` function to parse your date into R standard format
+
+```{r}
+ymd("2019-01-31")
+```
+
+```{r}
+mdy("January 31st, 2019")
+```
+
+```{r}
+dmy("31-Jan-2019")
+```
+
+```{r}
+ymd_hms("2019-01-31 20:11:59")
+```
+
+```{r}
+ymd_h("2019013120")
+```
+
+2. From individual components: Use `make_date()` for dates or `make_datetime()` for date-time
+
+```{r}
+flights %>%
+  select(year, month, day, hour, minute) %>%
+  mutate(departure_sched = make_datetime(year, month, day, hour, minute)) %>%
+  head(10)
+```
+
+```{r}
+make_datetime_100 <- function(year, month, day, time) {
+  make_datetime(year, month, day, time %/% 100, time %% 100)
+}
+
+flights %>% 
+  filter(!is.na(dep_time), !is.na(arr_time)) %>%  # remove all cancelled fights
+  mutate(
+    dep_time = make_datetime_100(year, month, day, dep_time),
+    arr_time = make_datetime_100(year, month, day, arr_time),
+    sched_dep_time = make_datetime_100(year, month, day, sched_dep_time),
+    sched_arr_time = make_datetime_100(year, month, day, sched_arr_time)
+  ) %>% 
+  select(origin, dest, ends_with("delay"), ends_with("time")) %>%
+  head(10)
+```
+With this data, we can visualize the distribution of departure times across the year:
+```{r}
+flights_dt <- flights %>% 
+  filter(!is.na(dep_time), !is.na(arr_time)) %>%  # remove all cancelled fights
+  mutate(
+    dep_time = make_datetime_100(year, month, day, dep_time),
+    arr_time = make_datetime_100(year, month, day, arr_time),
+    sched_dep_time = make_datetime_100(year, month, day, sched_dep_time),
+    sched_arr_time = make_datetime_100(year, month, day, sched_arr_time)
+  ) %>% 
+  select(origin, dest, ends_with("delay"), ends_with("time"))
+```
+
+```{r}
+flights_dt %>%
+  ggplot(aes(dep_time)) + 
+  geom_freqpoly(binwidth = 86400) # 86400 seconds = 1 day
+```
+
+We can set the time interval into 10 minutes and zoom in to look at a smaller proportion of data: 
+```{r}
+flights_dt %>% 
+  filter(dep_time < ymd("20130102")) %>% 
+  ggplot(aes(dep_time)) + 
+  geom_freqpoly(binwidth = 600) # 600 s = 10 minutes
+```
+
+We can change the time interval: 
+```{r}
+flights_dt %>% 
+  filter(dep_time < ymd_hms("20130110210000") & dep_time > ymd_hm("201301080800")) %>% 
+  ggplot(aes(dep_time)) + 
+  geom_freqpoly(binwidth = 3600) # 600 s = 10 minutes
+```
+
+3. We can also pick up time components from the R standard time format. 
+
+```{r}
+datetime <- ymd_hms("2016-07-08 12:34:56")
+```
+
+```{r}
+year(datetime)
+```
+
+```{r}
+month(datetime)
+```
+
+If you want to have character values from `month()`, set `lable = TURE`.
+```{r}
+month(datetime, label = TRUE)  # return the abbreviated name of the month or weekday
+```
+
+We can also print out what day it is in the month, year, or week. 
+```{r}
+mday(datetime)   # day of the month
+```
+
+```{r}
+yday(datetime)   # day of the year
+```
+
+```{r}
+wday(datetime) 
+```
+
+Some calendars start from Monday, while others start from Sunday. To avoid confusion, it is better to report character values when reporting the day of the week. 
+```{r}
+wday(datetime, label = TRUE, abbr = FALSE)   # day of the week
+```
+
+```{r}
+minute(datetime)
+```
+
+```{r}
+second(datetime)
+```
+
+***Example 1***: Use `wday()` to see the distribution of flights depart everyday of a week.
+
+```{r}
+flights_dt %>%
+  mutate(wday = wday(dep_time, label = TRUE)) %>%
+  count(wday)
+```
+
+***Example 2***: What is the best time of an hour to fly?
+
+It could be the average departure delay time or the average arrival delay. 
+```{r}
+flights_dt %>%
+  mutate(minute = minute(dep_time)) %>%
+  group_by(minute) %>%
+  summarize(
+    n = n(),
+    avg_dep = mean(dep_delay, na.rm = TRUE), 
+    avg_arr = mean(arr_delay, na.rm = TRUE)
+  ) %>%
+  head(10)
+```
+
+```{r}
+flights_dt %>%
+  mutate(minute = minute(dep_time)) %>%
+  group_by(minute) %>%
+  summarize(avg_dep = mean(dep_delay, na.rm = TRUE)) %>%
+  ggplot(aes(x = minute, y = avg_dep)) + geom_line()
+```
+
+```{r}
+flights_dt %>%
+  mutate(minute = minute(dep_time)) %>%
+  group_by(minute) %>%
+  summarize(avg_arr = mean(arr_delay, na.rm = TRUE)) %>%
+  ggplot(aes(x = minute, y = avg_arr)) + geom_line()
+```
+
+***Example 3***: Find the overnight flights: 
+```{r}
+flights_dt %>% 
+  filter(arr_time < dep_time) %>%
+  head(10)
+```
+
+These are overnight flights. We used the same date information for both the departure and the arrival times, but these flights arrived on the following day. We can fix this by adding days(1) to the arrival time of each overnight flight.
+
+```{r}
+flights_dt %>% 
+  mutate(
+    overnight = arr_time < dep_time,
+    arr_time = arr_time + days(overnight * 1),
+    sched_arr_time = sched_arr_time + days(overnight * 1)
+  ) %>%
+  head(10)
+```
+
+***Example 4***: Find the average departure delay of each day of the week. 
+```{r}
+flights_dt %>%
+  mutate(wday = wday(dep_time, label = TRUE)) %>%
+  group_by(wday) %>%
+  summarize(avg_dep = mean(dep_delay, na.rm = TRUE)) %>%
+  ggplot(aes(x = wday, y = avg_dep)) + 
+    geom_col() + 
+    labs(
+      x = "Day of the Week",
+      y = "Average Departure Delay",
+      title = "Average Departure Delay of Each Day of the Week"
+    ) + 
+    theme_bw()
+```
+
