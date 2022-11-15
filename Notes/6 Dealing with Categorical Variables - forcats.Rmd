@@ -2,7 +2,12 @@
 title: "6 Dealing with Categorical Variables - forcats"
 author: "Jiuru Lyu"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+ html_document: 
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
 ---
 
 ```{r setup, include=FALSE}

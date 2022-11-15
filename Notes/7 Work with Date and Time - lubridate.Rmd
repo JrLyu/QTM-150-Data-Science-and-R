@@ -2,7 +2,12 @@
 title: "7 Work with Date and Time - lubridate"
 author: "Jiuru Lyu"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  html_document: 
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
 ---
 
 ```{r setup, include=FALSE}

@@ -1,0 +1,666 @@
+---
+title: "Flow Control and Function"
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+# Flow Control
+Some sontrol statements affect or control the execution of other statements in some way.
+
+## `ifelse()` Function'
+Syntax: 
+```
+ifelse(testexpression, yes, no)
+```
+
+***Example 1***: Convert a character vector to a numeric vector
+```{r}
+x <- c("female", "male", "male", "female", "female", "male", "female")
+
+ifelse(x == "female", 0, 1)
+```
+
+***Example 2***: Convert uniform random numbers to binomial random numbers.
+
+`rXXX(size, parameters of distribution)` create random numbers from some specific probability distribution
+```{r}
+set.seed(23)
+x <- runif(10,0,6) # Create random numbers from a uniform distribution from (0,6)
+
+ifelse(x > 3, 1, 0)
+
+```
+
+***Example 3***: Import `gss_cat` dataset, create a new variable `racenew` only with values `0` and `1`, where `1` represents white, and `0` represents non-white.
+```{r}
+gss_cat %>%
+  mutate(racenew = ifelse(race == "White", 1, 0)) %>%
+  head(10)
+```
+
+## `if() else` statement
+The `if() else` statement allows us to control which statements are executed. 
+
+Syntax: 
+```
+if (condition) {commands when condition is TRUE}
+else {commands when condition is FALSE}
+```
+
+```{r}
+x <- 5
+
+if (x < 0) {
+  print("negative")
+} else {
+  print("non-negative")
+}
+```
+
+Sometimes, when there is only one command to execute, we can omi `{}`.
+
+We can also omit `print()`.
+```{r}
+x <- c("female", "male")
+
+if (is.numeric(x)) "numeric vector" else "non-numeric vector"
+```
+
+AND operator
+```{r}
+x <- 15
+
+if (x > 0 & x < 10) {
+  print("target")
+} else {
+  print("error")
+}
+```
+
+OR operator
+```{r}
+x <- -5
+
+if (x > 0 | x < 0) {
+  print("non-zero number")
+} else {
+  print("zero")
+}
+```
+
+NOT operator
+```{r}
+if (!FALSE){
+  cat("this statement will show up")
+}
+```
+
+## Nested `if() else` statement
+Syntax: 
+```
+if (test_expression1) {
+  statement 1
+} else if (test_expression2) {
+  statement 2
+} else if (test_expression3) {
+  statement 3
+} else {
+  statement 4
+}
+```
+
+```{r}
+x <- 15
+
+if (x<0) {
+  print("negative number")
+} else if (x > 0) {
+  print("positive number")
+} else {
+  print("zero")
+}
+```
+
+***Example***: Print the letter grade for a grade of one student in QTM 150. If grade > 90, we give them a A; if 80 < grade < 90, we give them a B; otherwise C.
+```{r}
+set.seed(111)
+grade <- rnorm(1, 50, 50)
+
+if (grade > 90) {
+  print("A")
+} else if (grade > 80 & grade <= 90) {
+  print("B")
+} else if (grade > 70 & grade <= 80) {
+  print("C")
+} else {
+  print("D")
+}
+```
+
+# The `for` Loop
+The `for` loop controls how many times the statement are repeated. 
+
+If we want to run the same block of code multiple times, the `for()` loop statement allows one to specify that a certain operation should be repeated a fixed number of times. 
+
+## Iteration `n` times over an index
+***Example 1***: Calculate the sum from 1 to 100.
+```{r}
+n <- 100
+x <- 0 # Initial value
+
+for (i in 1:n) {
+  x <- x + i
+}
+x
+```
+
+***Example 2***: Adding stuff to a vector
+```{r}
+set.seed(1234)
+random_numbers <- NULL # Create a vector with no elements
+
+for (i in 1:10) {
+  random_numbers <- c(random_numbers, runif(1)) # runif(1) creates random numbers from a uniform distribution in [0,1]
+}
+
+cat(random_numbers)
+
+```
+
+## Iterate over all items in a vector
+***Example 1***: In R, we have some US state facts and figures. Find all the states starting with the letter `M`.
+```{r}
+Mstates <- NULL
+
+for (x in state.name) {
+  if (substr(x, 1, 1) == "M") {
+    Mstates <- c(Mstates, x)
+  }
+}
+Mstates
+```
+
+***Example 2***: Central Limit Theorem
+**Central Limit Theorem (CLT)**: the distribution of sample means approximates a normal distribution as the sample size gets larger, regardless of the population's distribution. i.e., The sampling distribution (histogram) of sample means (selection with random sample size) from a (fixed) population is approximately normal. 
+```{r}
+pop <- 1:100
+size <- 10
+iteration <- 10000
+sample <- NULL
+```
+
+$\boxed{\text{Method 1}}$: Use the `for()` Loop
+```{r}
+set.seed(1108)
+
+for (i in 1:iteration) {
+  x <- mean(sample(pop, size, replace = FALSE))
+  sample <- c(sample, x)
+}
+
+hist(sample, breaks = 50)
+```
+
+$\boxed{\text{Method 2}}$: We can also use `replicate()` function. The syntax goes follows: 
+```
+replicate(#of\repetition, expression)
+```
+```{r}
+set.seed(1108)
+
+hist(replicate(iteration, mean(sample(pop, size))), breaks = 50)
+```
+
+***Example 3***: get the average grades for each student
+```{r}
+# Look at the data set
+set.seed(1000)
+
+exams <- list(
+  student1 = round(runif(10, 50, 100)),
+  student2 = round(runif(10, 50, 100)),
+  student3 = round(runif(10, 50, 100)),
+  student4 = round(runif(10, 50, 100)),
+  student5 = round(runif(10, 50, 100))
+)
+
+exams
+```
+
+If we run `mean(exams)`, we will get an error. 
+```{r}
+mean(exams)
+```
+
+This is because, we need `[[]]` to extract the values in the vector format instead of single bracket: 
+```{r}
+exams[[1]]
+```
+
+If we use single bracket `[]`, we will get the result not in the vector format. The result will be in the list format. 
+```{r}
+exams[1]
+```
+
+
+What we can do: 
+```{r}
+list(
+  student1 = mean(exams$student1), 
+  student2 = mean(exams$student2), 
+  student3 = mean(exams$student3), 
+  student4 = mean(exams$student4), 
+  student5 = mean(exams$student5)
+)
+```
+
+However, when the number of students gets larger, this method is very not efficient. 
+
+$\boxed{\text{Method 1}}$: We can use `for()` loop instead.
+```{r}
+mean_score = NULL
+
+for (i in seq_along(exams)){
+  mean_score = c(mean_score, mean(exams[[i]]))
+}
+
+mean_score
+```
+
+`seq_along()` gives a vector including all the index of the argument. 
+
+$\boxed{\text{Method 2}}$: We can also use `Xapply()` function. 
+```{r}
+lapply(exams, mean) # lapply will return another list
+```
+```{r}
+sapply(exams, mean) # sapply will return the result in vecotr format 
+```
+
+***Extension***: Find the range of grades that each student get from the exams. 
+```{r}
+range = NULL
+
+for (i in seq_along(exams)) {
+  range <- c(range, max(exams[[i]]) - min(exams[[i]]))
+}
+
+range
+```
+
+
+# Function
+
+We have been using many functions in R, now we learn to write them ourselves. We will use the `function()` function to create functions.
+Syntax: 
+
+- Functions that include one input and one output
+
+```
+function_name <- function(input) {
+  Body of the function
+  Output value (return)
+}
+```
+
+- Functions that include multiple inputs and outputs
+
+```
+function_name <- function(input1, input2, input3, ...) {
+  Body of the function
+  return(list = c(output1, output2, output3, ...))
+}
+```
+
+- When recalling the function, we simple use
+```
+function_name(input)
+```
+
+***Example 1***: Create a mean function
+```{r}
+my_mean <- function(x) {
+  m <- sum(x) / length(x)
+  return(m)
+}
+
+my_mean(c(1:10))
+```
+
+Functions can be declared and used inside a function. Functions in R can also return functions.
+
+***Example 2***: Create a mean function for inputs including `NA` values
+```{r}
+my_mean <- function(x) {
+  if (sum(is.na(x)) > 0) {
+    x <- na.omit(x)
+  }
+  m <- sum(x) / length(x)
+    return(m)
+}
+
+my_mean(c(1:5, NA))
+
+```
+
+Or, we can let the user to choose if they want the `NA` to be omitted or not. 
+```{r}
+my_mean <- function(x, na.rm) {
+  if (na.rm == TRUE) {
+    if (sum(is.na(x)) > 0) {
+      x <- na.omit(x)
+    }
+  }
+  m <- sum(x) / length(x)
+  return(m)
+}
+
+my_mean(c(1:5, NA), na.rm = TRUE)
+my_mean(c(1:5, NA), na.rm = FALSE)
+```
+
+***Example 3***: Get some summaries of a numeric vector
+```{r}
+summaries <- function(x) {
+  return(list = c(min(x), max(x), mean(x), median(x), sd(x), length(x)))
+}
+
+summaries(c(1:15))
+```
+
+***Example 4***: Make a function to calculate the range
+```{r}
+my_range <- function(x) {
+  r <- max(x) - min(x)
+  return(r)
+}
+
+my_range(1:100)
+```
+
+Or we can combine the `range()` function in R to write `my_range()` function
+```{r}
+my_range <- function(x) {
+  r <- range(x)[2] - range(x)[1]
+  return(r)
+}
+
+my_range(1:100)
+```
+
+***Example 5***: Make a re-scale function that re-scale all the numbers in a vector to [0,1]
+We can use the following function to re-scale: 
+$$x_r=\frac{x-\min{x}}{\max{x}-\min{x}},$$
+where $x_r$ is the re-scaled $x$ value. 
+```{r}
+rescale <- function(x) {
+  (x-min(x)) / my_range(x)
+}
+
+rescale(1:10)
+```
+
+***Example 6***: Plot a function
+$\boxed{\text{Method 1}}$
+```{r}
+func1 <- function(x) { 
+  x^2
+}
+
+curve(func1,-1,1)
+```
+
+$\boxed{\text{Method 2}}$
+```{r}
+fun2<-function (x) {
+  y<-x^2+2*x+1
+  plot(x,y)
+}
+
+fun2(seq(-1,1,0.01))
+```
+
+$\boxed{\text{Method 3}}$
+```{r}
+ggplot(data=data.frame(x=c(-2,2)), aes(x=x))+
+  stat_function(fun=func1)+ 
+  xlim(c(-2,2))
+```
+
+We can also use `optimize()` to find the minimum for the function at (0,0)
+```{r}
+optimize(func1, interval=c(-2,2))
+```
+
+***Example 7***
+```{r}
+myfun <- function(x) {
+  1 / (1 + exp(-x + 10))
+}
+curve(myfun(x), from = 0, to = 20)
+curve(1 - myfun(x), add = TRUE, col = "red") # Add a line
+```
+
+
+***Example 8***: Create a function to print all the summaries
+Note: If we do not want to use `return(list = c(output1, output2, output3,...)`, we can also use `print()` to print each output. 
+```{r}
+summaries <- function (vector) {
+  print(length(vector))
+  print(summary(vector))
+  print(mean(vector,na.rm = T))
+  print(sd(vector,na.rm=T))
+  print(quantile(vector))
+  par(mfrow=c(1,2))
+  hist(vector)
+  boxplot(vector)
+}
+
+x <- rnorm(100)
+summaries(x)
+```
+
+
+# The `purrr` Package
+
+The function in `purrr` makes iteration easier.
+
+Recall the data set including students exam results over the semester. 
+```{r}
+# rXXX(size, parameters of this distribution) to create random numbers from a specific probability distribution
+set.seed(1000)
+exams <- list(
+  student1 = round(runif(10, 50, 100)),
+  student2 = round(runif(10, 50, 100)),
+  student3 = round(runif(10, 50, 100)),
+  student4 = round(runif(10, 50, 100)),
+  student5 = round(runif(10, 50, 100))
+)
+exams
+
+extra_credit <- list(0, 0, 10, 10, 15)
+```
+
+We can make a function to calculate many students' exams average
+```{r}
+collection_mean <- function(list) {
+  output <- vector("double", length(list))  # double vector, is a numeric vector
+  for (i in seq_along(list)) { # seq_along() is to get index of elements of the list, 1:length(list) works as well
+    output[i] <- mean(list[[i]])
+  }
+  output
+}
+
+collection_mean(exams)
+```
+
+## `map()` function in the purrr package
+
+The goal of using `purrr` functions instead of for loops is to allow you to break common list manipulation challenges into independent pieces:
+
+How can you solve the problem for a single element of the list? Once you’ve solved that problem, purrr takes care of generalizing your solution to every element in the list. With `purrr`, you get lots of small pieces that you can compose together with the pipe.
+
+`map()` function for each type of output:
+
+- `map()` makes a list.
+- `map_lgl()` makes a logical vector.
+- `map_int()` makes an integer vector.
+- `map_dbl()` makes a double vector.
+- `map_chr()` makes a character vector.
+
+Each function takes a vector/list as input, applies a function to each piece, and then returns a new vector/list that’s the same length
+
+***Example 1***
+```{r}
+# map(vector/list, function)
+map(exams, mean) # map the mean function to each element, and then return a list
+
+map_dbl(exams, mean) # return a vector
+```
+
+***Example 2***: Calculate the variance (`var()`) of each student exam grades.
+```{r}
+map(exams, mean)
+
+map(exams, sd)
+
+exams %>% 
+  map(var)
+
+exams %>%
+  map(max)
+```
+
+***Example 3***: Calculate the max grade (`max()`)for each student. Return the result as a vector.
+```{r}
+exams %>% 
+  map_dbl(max)  # double vector, numeric vector
+```
+
+***Example 4***: Calculate the range for each student. Return the result as a vector.
+```{r}
+range <- function(x) {
+  max(x) - min(x)
+}
+exams %>%
+  map_dbl(range)
+```
+
+***Example 5***:  Compute a final grade for each student, where the final grade is the average test score plus any `extra_credit` assigned to the student. Return the results as a double (i.e. numeric) vector.
+$\boxed{\text{Method 1}}$
+```{r}
+final_grade <- function(list, y) {
+  mean(list) + y
+}
+
+map2_dbl(exams, extra_credit, final_grade)
+```
+
+***Extension***: Compute a final grade for each student, where the final grade is the highest test score plus any `extra_credit` assigned to the student
+```{r}
+final_grade <- function(list, y) {
+  max(list) + y
+}
+
+map2(exams, extra_credit, final_grade)
+```
+
+$\boxed{\text{Method 2}}$
+```{r}
+exams %>%
+  map(mean) %>%
+  map2(extra_credit, sum)
+```
+
+$\boxed{\text{Method 3}}$ The most efficient way. 
+```{r}
+map2_dbl(exams, extra_credit, function(x ,y) {mean(x) + y})
+```
+
+## `map()` works on a dataset
+
+***Example 1***: Compute the mean of every column in `mtcars`
+
+$\boxed{\text{Method 1}}$
+```{r}
+map_dbl(mtcars,mean)
+```
+
+$\boxed{\text{Method 2}}$
+```{r}
+.x<-mtcars[[1]]      # map understands . specially
+mean(.x)            # solve for single .x
+```
+
+```{r}
+map_dbl(mtcars, ~ mean(.x)) # generalize solution with map() function
+```
+
+***Example 2***: Fit the linear model for each piece of data.
+```{r}
+mtcars %>%
+  split(.$cyl) %>%
+  map(function(df) lm(mpg~wt, data = df))
+```
+
+***Shortcut***: `.` refers to the current list element (in the same way that i referred to the current index in the for loop).
+
+```{r}
+mtcars %>%
+  split(.$cyl) %>%
+  map(~lm(mpg~wt, data = .))
+```
+
+***Example 3***:
+```{r}
+mtcars %>%
+  split(.$cyl) %>%
+  map(~ggplot(., aes(wt, mpg))+geom_point())
+```
+
+***Example 4***: Compute the number of unique values in each column.
+```{r}
+.x<-iris[[1]]
+length(unique(.x))
+```
+
+```{r}
+map(iris, ~ length(unique(.x)))
+```
+
+***Example 5***: Fix the missing values: 
+```{r}
+df<- tibble(
+  a= c(rnorm(9), -99),
+  b<-c(-999, -99, rnorm(8))
+)
+
+df
+```
+
+```{r}
+fix_missing <- function(x) {
+  x[x == -99] <- NA
+  x
+}
+```
+
+```{r}
+map(df, fix_missing)
+```
+
+
+
