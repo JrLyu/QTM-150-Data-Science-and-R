@@ -1,0 +1,731 @@
+---
+title: "9 Interactive Visualization"
+author: "Jiuru Lyu"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(maps)
+library(ggmap)
+library(tidyverse)
+library(nycflights13)
+library(plotly)
+```
+
+# The `qplot` Function
+
+The function `qplot()` in the package `ggplot2` is very similar to the basic `plot()` function from the R base package. It can be used to create and combine easily different types of plots, it's great for allowing you to produce plots quickly, However, it remains less flexible than the function `ggplot()`, I highly recommend using `ggplot()` as it makes it easier to create complex graphics.
+
+This lab provides a brief introduction to `qplot()`, which stands for quick plot. 
+
+```{r}
+tips <- read.csv("tips.csv")
+
+summary(tips)
+```
+***Basic plot in R***
+```{r}
+plot(tips$totbill, tips$tip)
+```
+
+***Example 1***: Histogram
+```{r}
+ggplot(tips, aes(x = tip)) +
+  geom_histogram(binwidth = 0.2)
+```
+
+`qplot()` is a shortcut of `ggplot()`: 
+```
+qplot(x, y, data=, geom=, color=variable, fill=, shape=, size=, alpha=, facets=, xlab=, ylab=, main=,)
+```
+
+OR
+
+```
+qplot(variables, geometry, color, size, shape, facet, dataset)
+```
+
+```{r}
+qplot(x = tip, data = tips, geom = "histogram", binwidth = 0.2)
+```
+
+*Add blue/green color to the histogram*
+```{r}
+qplot(x = tip, data = tips, geom = "histogram", fill = "green", binwidth = 0.2)
+```
+
+Apparently, the color is not filled in green. This is because aesthetic parameters in `qplot()` always try to map the aesthetic to a variable. We need to use `I(value)` to indicate a specific value.
+```{r}
+qplot(x = tip, data = tips, geom = "histogram", fill = I("green"), binwidth = 0.2)
+```
+
+*Set color according to the variable sex*
+```{r}
+qplot(x = tip, data = tips, geom = "histogram", fill = sex, binwidth = 0.2)
+```
+
+***Example 2*** Scatter plot
+```{r}
+qplot(totbill, tip, data = tips, geom = "point", col = sex)
+```
+
+***Note***: `qplot()` gives a scatter plot by default. 
+```{r}
+qplot(totbill, tip, data = tips, col = sex)
+```
+
+*Add more geom arguments by a vector of multiple geom names in turn*: 
+```{r}
+qplot(x = totbill, y = tip, data = tips, geom = c("point", "smooth"), col = sex)
+```
+
+*Add labels*: 
+```{r}
+qplot(x = totbill, y = tip, data = tips, geom = c("point", "smooth"), col = sex, xlab = "Total Bill", ylab = "Tip", main = "Plot of Total Bill vs. Tip")
+```
+
+***Example 3***: Side-by-side box plot
+sex vs. tip
+```{r}
+qplot(x = sex, y = tip, data = tips, geom = "boxplot", col = time, facets = ~smoker)
+```
+
+***Example 4***: For the `mtcars` data set, provide a `qplot` to see the relation between `wt` and `mpg`, set the color of points to `cyl`, give different `lm` smooth lines according to `cyl`.
+```{r}
+qplot(x = wt, y = mpg, data = mtcars, geom = c("point", "smooth"), method = "lm", col = factor(cyl))
+```
+
+
+# The `plotly` Package
+
+`plotly` is an R package for creating interactive web-based graphs.
+
+There are two main ways to initiate a plotly object in R. The `plot_ly()` function transforms data into a plotly object, while the `ggplotly()` function transforms a ggplot object into a plotly object. Regardless of how a plotly object is created, printing it results in an interactive web-based visualization with tooltips, zooming, and panning enabled by default. 
+
+```{r}
+library(plotly)
+```
+
+There are two ways to make plotly graphs. 
+
+1. `ggplotly()`
+2. `plot_ly()`
+
+## `ggplotly()` Function
+
+Recall from our `qplot` example. 
+```{r}
+qplot(data = mtcars, x = mpg, y = wt, col = factor(cyl), geom = c("point", "smooth"), method = "lm")
+```
+
+To create a `ggplotly()` graph, create the `ggplot()` first. 
+```{r}
+plot <- ggplot(mtcars, aes(x = mpg, y = wt, col = factor(cyl))) + 
+    geom_point() + 
+    geom_smooth(method = "lm")
+```
+
+```{r}
+ggplotly(plot)
+```
+
+```{r}
+library(gapminder)
+
+glimpse(gapminder)
+```
+
+`ggplotly()` will animate time (frame refers to animation)
+```{r}
+p <- ggplot(gapminder, aes(x = gdpPercap, y = lifeExp, color = continent, size = pop, frame = year, text = country, id = country)) + 
+  geom_point() + 
+  scale_x_log10()
+```
+
+```{r}
+ggplotly(p)
+```
+
+We can also change the animation part in the `ggplotly()` function.
+
+- transition: the duration of the smooth transition between frame (in milliseconds)
+
+- easing: the type of transition easing (linear makes the movement smooth, elastic will make the points "bounce" around)
+
+- mode: describes how a new animate call interacts with currently-running animations.
+
+```{r}
+ggplotly(p) %>%
+  animation_opts(transition = 500, easing = "linear", mode = "immediate")
+```
+
+We can also change the place of the Play button and other details on the graph.
+```{r}
+ggplotly(p) %>% 
+  animation_opts(1000, easing = "elastic", redraw = FALSE) %>% 
+  animation_button(x = 1, xanchor = "right", y = 0, yanchor = "bottom") %>%
+  animation_slider(currentvalue = list(prefix = "YEAR ", font = list(color="red")))
+```
+
+## `plot_ly()` Function
+
+The `plot_ly()` function provides a direct interface to `plotly.js`, so anything in the [figure reference](https://plot.ly/r/reference/) can be specified via `plot_ly()`.
+
+A plotly visualization is composed of one (or more) trace(s), and every trace has a `type` (the default trace type is "scatter") can be used to draw a large amount of geometries along with the `add_XX()` functions.
+
+The `plot_ly()` function has a number of arguments that make it easier to scale data values to visual aesthetics (e.g.,`*color/colors`, `symbol/symbols`, `linetype/linetypes`, `size/sizes`). 
+
+The syntax of `plot_ly()` is similar to that of `qplot()`: 
+
+```
+plot_ly(data, x, y, symbol, size,  type, mode, color)
+```
+`type` is type of graph/depiction
+
+### Histogram; 
+
+Add ~ to map the variable
+```{r}
+plot_ly(data = tips, x = ~tip, type = "histogram")
+```
+
+Or we can use 
+```{r}
+plot_ly(tips, x = ~tip) %>%
+  add_histogram()
+```
+
+The code above will produce the same graph, but split into several lines with `add_XX()`
+
+
+To add time as a factor of color: 
+```{r}
+plot_ly(tips, x = ~tip, color = ~time) %>%
+  add_histogram()
+```
+
+### Bar plot
+
+```{r}
+plot_ly(data = tips, x = ~day, type = "bar")
+```
+
+`plot_ly()` will not do the statistical transformation for us, so we need to do it ourselves.
+```{r}
+tips %>%
+  count(day) %>%
+  plot_ly(x = ~day, y = ~n) %>%
+  add_bars()
+```
+
+*Note*: Bar traces required bar heights (both x and y), whereas histogram traces require just a single variable
+
+**Example**: 
+```{r}
+# Produce a correlation table
+corr <- cor(dplyr::select_if(diamonds, is.numeric))
+corr
+```
+
+```{r}
+
+# Produce a correlation heat map
+plot_ly() %>%
+  add_heatmap(x = rownames(corr), y = colnames(corr), z = corr) %>%
+  colorbar(limits = c(-1, 1))
+```
+
+### Box plot
+
+```{r}
+plot_ly(data = tips, y = ~tip, type = "box")
+```
+
+```{r}
+p1 <- plot_ly(data = tips, y = ~tip) %>%
+  add_boxplot
+
+p2 <- plot_ly(data = tips, y = ~tip, x = ~time) %>%
+    add_boxplot
+
+subplot(p1, p2)
+```
+
+```{r}
+plot_ly(tips, y = ~tip, x = ~interaction(time, day)) %>%
+  add_boxplot(color = ~time)
+```
+
+Add more attributes to the boxplot
+```{r}
+# Add points to the boxplot, pointpos moves where the points are and marker changes the color of the points
+plot_ly(tips, x = ~tip, type = "box", boxpoints = "all", pointpos = 1, marker = list(color = "green")) %>%
+  layout(title = "boxplot of tips") #adds a title to the boxplot
+```
+
+### Scatter Plot
+
+For two quantitative variables, plot_ly() defaults to a scatterplot, but you can also be explicit about adding a layer of markers/points via the add_markers() function.
+```{r}
+plot_ly(data = tips, x = ~totbill, y = ~tip)
+```
+
+```{r}
+plot_ly(data = tips, x = ~totbill, y = ~tip, text = ~day) %>%
+  add_markers(color = ~sex)
+```
+
+#### Different Modes in Scatter Plot
+```{r}
+plot_ly(data = tips, x = ~totbill, y = ~tip, color = ~sex, text = ~day, mode = "markers")
+```
+
+```{r}
+plot_ly(data = tips, x = ~totbill, y = ~tip, color = ~sex, type = "scatter", text = ~day, mode = "markers+text")
+```
+
+```{r}
+plot_ly(tips, x = ~totbill, y = ~tip, type = "scatter", mode = "text", text = ~day)
+```
+
+```{r}
+plot_ly(tips, x = ~totbill, y = ~tip, type = "scatter", mode = "text", text = ~paste("day:", day))
+```
+
+#### Add Comments
+
+***Example 1***: For gapminder, select year at 2002, make a plotly object to visualize the relation between log(gdpPercap) and lifeExp, set color according to continent, size according to population, text according to country, mark the largest lifeExp with the text "Longest LifeExp" in the plot.
+
+```{r}
+gapminder %>%
+  filter(year == 2002) %>%
+  plot_ly(x = ~log(gdpPercap), y = ~lifeExp, color = ~continent, size = ~pop, text = ~country) %>%
+  add_markers() %>%
+  slice(which.max(lifeExp)) %>%
+  add_annotations(text = "Longest LifeExp")
+```
+
+***Example 2***: Mark the max and min mpg
+```{r}
+plot_ly(data = mtcars, x = ~wt, y = ~mpg) %>%
+  slice(c(which.max(mpg), which.min(mpg))) %>%
+  add_annotations(text = c("Max mpg", "Min mpg"))
+```
+
+If we only want to point out the values at the maximum and minimum: 
+```{r}
+plot_ly(data = mtcars, x = ~wt, y = ~mpg) %>%
+  slice(c(which.max(mpg), which.min(mpg))) %>%
+  add_annotations(text = ~mpg)
+```
+
+If we want to point out the corresponding `cyl` value at the maximum and minimum mpg. 
+```{r}
+plot_ly(data = mtcars, x = ~wt, y = ~mpg) %>%
+  slice(c(which.max(mpg), which.min(mpg))) %>%
+  add_annotations(text = ~factor(cyl))
+```
+
+***Example 3***: Mark each point with the values of `cyl`.
+```{r}
+plot_ly(data = mtcars, x = ~wt, y = ~mpg, mode = "text", text = ~factor(cyl))
+```
+
+***Example 4***: will only mark each point that a cyl of 4 (filter will only affect the annotations in the plot, not the whole data set)
+```{r}
+plot_ly(mtcars, x = ~wt, y = ~mpg, mode = "markers", color = ~factor(cyl)) %>%
+  add_annotations(text = ~cyl, data = filter(mtcars, cyl == 4))
+```
+
+### Line Graph
+
+Line graph is good for time series datasets to see trends.
+
+***Example 1***: The `airmiles` data set
+```{r}
+data("airmiles")
+airmiles
+```
+
+Basic scatter plot
+```{r}
+plot_ly(x = ~time(airmiles), y = ~airmiles, type = "scatter", mode = "markers")
+```
+
+Add lines to the plot
+```{r}
+plot_ly(x = ~time(airmiles), y = ~airmiles, type = "scatter", mode = "markers+lines")
+```
+
+```{r}
+plot_ly(x = ~time(airmiles), y = ~airmiles, type = "scatter", mode = "lines")
+```
+
+OR
+```{r}
+plot_ly(x = ~time(airmiles), y = ~airmiles) %>%
+  add_lines()
+```
+
+
+***Example 2***: The `txhousing` data set
+```{r}
+head(txhousing)
+```
+
+```{r}
+plot_ly(txhousing, x = ~date, y = ~median, mode = "line", color = ~city)
+```
+
+```{r}
+plot_ly(txhousing, x=  ~date, y = ~median) %>%
+  add_lines(color = ~city) %>%
+  hide_legend()
+```
+
+When a data frame is associated with a `plotly` object, it allows us to manipulate the data underlying that object in the same way we would directly manipulate the data (`dplyr`)
+
+
+We can manipulate data, express complex multi-layer plots, and chain all operations together via `%>%`. It is more readable and understandable.
+
+```{r}
+txhousing %>%
+  group_by(city) %>%
+  plot_ly(x = ~date, y = ~median) %>%
+  add_lines(name = "Texan cities", alpha = I(0.2)) %>%  #first trace: add one line per city
+  filter(city == "Houston") %>%
+  add_lines(name = "Houston", color = I("red")) # second trace
+```
+
+Sometimes the directed graph of a pipeline can be restrictive. (In this example, after filter the data down to Houston, there is no way to recover the original data inside the pipeline). 
+
+***Solution 1***:
+
+```{r}
+txhousing %>%
+  group_by(city) %>% 
+  plot_ly(x = ~date, y = ~median) %>%
+  # plots one line per city since p knows city is a grouping variable
+  add_lines(alpha = I(0.2), name = "Texan Cities") %>%
+  add_lines(name = "Houston", data = filter(txhousing, city == "Houston"), color = I("red")) %>%
+  add_lines(name = "San Antonio", data = filter(txhousing, city == "San Antonio"), color = I("black"))
+```
+
+***Solution 2***:
+
+The `add_fun()` function helps to work-around this restriction. It works by applying a function to the `plotly` object, but does not affect the data associated with the `plotly` object.
+
+The `add_fun()` function that accepts a plot object as input, possibly applies a transformation to the data, and maps that data to visual objects. 
+
+```{r}
+layer_city <- function(plot, name) {    # a plot as input
+    plot %>% filter(city == name) %>% add_lines(name = name)   # apply transformation to the data
+  }
+```
+
+```{r}
+txhousing %>%
+  group_by(city) %>%
+  plot_ly(x=~date, y=~median) %>%
+  add_lines(name="Texan cities", alpha=I(0.2)) %>%  # first trace: allcities
+  add_fun(layer_city, "Houston") %>%     # map that data to plot object
+  add_fun(layer_city, "San Antonio")
+```
+
+***Extension***: One more example for `add_fun()`
+
+```{r}
+layer_iqr <- function(plot) {
+  plot %>%
+    group_by(date) %>% 
+    summarise(
+      q1 = quantile(median, 0.25, na.rm = TRUE),
+      m = median(median, na.rm = TRUE),
+      q3 = quantile(median, 0.75, na.rm = TRUE)
+    ) %>%
+    add_lines(y = ~m, name = "median", color = I("black")) %>%
+    add_ribbons(ymin = ~q1, ymax = ~q3, name = "IQR", color = I("yellow"))
+}
+```
+
+```{r}
+txhousing %>%
+  group_by(city) %>%
+  plot_ly(x=~date, y=~median) %>%
+  add_lines(name="Texan cities", alpha=I(0.2)) %>%  # first trace: allcities
+  add_fun(layer_iqr) %>%
+  add_fun(layer_city, "Houston") %>%
+  add_fun(layer_city, "San Antonio")
+```
+
+***Example 3***: Provide a line graph to visualize the trend of unemployment rate over time in economics data set, and mark the date on the point with the highest unemployment rate.
+```{r}
+economics %>%
+  plot_ly(x = ~date, y = ~unemploy) %>%
+  add_lines() %>%
+  slice(which.max(unemploy)) %>%
+  add_annotations(text = ~date)
+```
+
+
+
+### Extension on `plot_ly()`
+
+# Creating Maps
+
+## The `ggmap` Package
+
+The package makes it easy to retrieve raster map tiles from popular online mapping services like Stamen Maps and Google Maps, and plot them using the ggplot2 framework:
+
+We can add the points (with longitude and latitude) to the map
+
+***Example 1***: find the airports with the highest arrival delay in a map
+
+- Create the data set
+```{r}
+data1 <- flights %>%
+  group_by(dest) %>%
+  summarize(average = mean(arr_delay, na.rm = TRUE)) %>%
+  left_join(airports, by=c("dest" = "faa"))
+
+head(data1)
+```
+
+- Create a base layer US map
+
+Note: Syntax: 
+```
+c(lowerleftlon, lowerleftlat, upperrightlon, upperrightlat)
+```
+```{r}
+us <- c(left = -125, bottom = 25.75, right = -67, top = 49)
+```
+
+Different map types: 
+```
+maptype= c("terrain", "terrain-background", "terrain-labels", "terrain-lines",
+  "toner", "toner-2010", "toner-2011", "toner-background", "toner-hybrid",
+  "toner-labels", "toner-lines", "toner-lite", "watercolor") 
+```
+```{r}
+map <- get_stamenmap(us, zoom = 5, maptype = "toner-lite")
+
+ggmap(map)  
+```
+
+- Add points on the map
+```{r}
+map1 <- ggmap(map) + 
+  geom_point(data = data1, aes(x = lon, y = lat, color = average, size = average, text = name), na.rm = T) +
+  scale_color_gradient(low = "green", high = "darkblue")
+
+ggplotly(map1)
+```
+
+***Example 2***: find the most popular airport in a map
+
+- Work with the data set
+
+```{r}
+data2 <- flights %>%
+  drop_na() %>%
+  count(dest) %>%
+  left_join(airports, by = c("dest" = "faa"))
+```
+
+- Create the map
+```{r}
+us <- c(left = -125, bottom = 25.75, right = -67, top = 49)
+map <- get_stamenmap(us, zoom = 5, maptype = "toner-lite")
+map2 <- ggmap(map) + 
+  geom_point(data = data2, aes(x = lon, y = lat, color = n, size = n, text = name), na.rm = T) +
+  scale_color_gradient(low = "blue", high = "red")
+
+ggplotly(map2)
+```
+
+## The `maps` Pacakge
+
+It allows us to turn data from the maps into a data frame suitable for plotting with ggplot.
+
+The structure of those data frames:
+
+- long: longitude.
+- lat:  latitude.
+- order: shows in which order ggplot should “connect the dots”
+- region and subregion: tell what region or subregion a set of points surrounds.
+- group: This is very important! ggplot2’s functions can take a group argument which controls whether adjacent points should be connected by lines. If they are in the same group, then they get connected, but if they are in different groups then they don’t.
+
+Plot the USA map:  using `geom_polygon()`.
+
+`geom_polygon()` drawn lines between points and “closes them up” (i.e. draws a line from the last point back to the first point). You have to map the group aesthetic to the group column.
+
+***Example 1***: Get data set with States info to get a map
+
+- Get the State information
+```{r}
+states <- map_data("state") 
+```
+
+- Create the map
+```{r}
+qplot(long, lat, data=states)
+```
+
+```{r}
+qplot(long, lat, data = map_data("world2"))
+```
+
+***Example 2***: We need to use `group=group` if we want to connet the map with lines
+
+```{r}
+qplot(long, lat, data = states, geom = "path")
+```
+
+```{r}
+qplot(long, lat, data = states, geom = "path", group = group)
+```
+
+***Example 3*** Use `geom = "polygon"`
+```{r}
+qplot(long, lat, data = states, geom = "polygon", group = group)
+```
+
+We can change the boarder color: 
+```{r}
+ggplot(states) +
+  geom_polygon(aes(x = long, y = lat, group = group), color = "red")
+```
+
+We can also change the filled color
+```{r}
+qplot(long, lat, data = states, geom = "polygon", group = group, fill = long, color = "red")
+```
+
+***Example 4***: `coord_fixed()` fixes the relationship between one unit in the y direction and one unit in the x direction. every y unit was 1.3 times longer than an x unit, the plot came out looking good.
+```{r}
+ggplot(data = states) + 
+  geom_polygon(aes(x = long, y = lat, fill = region, group = group), color = "white") + 
+  coord_fixed(1.3) +
+  guides(fill = FALSE)
+```
+
+Note: `guides(fill = FALSE)` turns off the color legend. 
+
+***Example 5***: Create a map of the West Coast of the US.
+```{r}
+west_coast <- subset(states, region %in% c("california", "oregon", "washington"))
+
+ggplot(data = west_coast) + 
+  geom_polygon(aes(x = long, y = lat, group = group), fill = "palegreen", color = "black")
+```
+
+Apparently, the scale of this map is not correct. We can use `coord_quickmap()` to let R choose the suitable ratio for us.
+
+```{r}
+ggplot(data = west_coast) + 
+  geom_polygon(aes(x = long, y = lat, group = group), fill = "palegreen", color = "black") + 
+  coord_quickmap()
+```
+
+***Example 6***: Get a state map (Use Georgia for example)
+```{r}
+ga_df <- map_data("state")  %>%
+  filter(region == "georgia")
+```
+
+```{r}
+ggplot(data = ga_df) + 
+  geom_polygon(aes(x = long, y = lat, group = group), fill = "palegreen", color = "black")
+```
+
+We can change the theme to make the map more distinctive. 
+```{r}
+ggplot(data = ga_df) + 
+  geom_polygon(aes(x = long, y = lat, group = group), fill = "palegreen", color = "black") + 
+  coord_quickmap() + 
+  theme_void()
+```
+
+We can change the color. 
+```{r}
+ggplot(data = ga_df, mapping = aes(x = long, y = lat, group = group)) + 
+  coord_quickmap() + 
+  geom_polygon(color = "black", fill = "gray") + 
+  theme_void()
+```
+
+***Example 7***: Get county map
+```{r}
+state_df <- map_data("county") %>%
+    filter(region == "georgia")
+```
+
+```{r}
+ggplot(data = ga_df, mapping = aes(x = long, y = lat, group = group)) + 
+  coord_quickmap() + 
+  geom_polygon(color = "black", fill = "gray") +  
+  theme_void() + 
+  geom_polygon(data = ga_df, aes(x = long, y = lat, group = group),fill = NA, color = "white") +
+  geom_polygon(data = state_df, color = "black", fill = NA) 
+```
+
+***Example 8***: Mark the population of each county in Georgia
+
+- Load the external data set of population
+```{r}
+GAdat <- read.csv("GAdat.csv")
+```
+
+- Clean the external data set
+```{r}
+GAdat$County <- tolower(GAdat$County)
+
+ga_df$subregion <- replace(ga_df$subregion, ga_df$subregion=="de kalb", "dekalb")
+```
+
+```{r}
+mapdat <- left_join(GAdat, state_df, by = c("County" = "subregion"))
+```
+
+- Create the map
+```{r}
+ggplot(mapdat, aes(x=long, y=lat, group = group)) +
+  geom_polygon(aes(fill = Population, color="yellow"),colour = alpha("red", 1/2))  +
+  scale_fill_gradient(low="blue", high="red") +
+  geom_polygon(data = state_df, colour = "black", fill = NA) + theme_void() +
+  coord_quickmap()
+```
+
+***Example 9***: We can also play with colors:
+```{r}
+ggplot(mapdat, aes(long, lat, group = group)) +
+  geom_polygon(aes(fill = Population, color="yellow"), colour = alpha("red", 1/2))  +
+  geom_polygon(data = state_df, colour = "black", fill = NA) + 
+  theme_void() +
+  coord_fixed(1.2)+
+  scale_fill_gradientn(colours = rev(rainbow(7)),
+                         breaks = c(2, 4, 10, 100, 1000, 10000),
+                         trans = "log10")
+```
+
+```{r}
+world <- map_data("world")
+
+ggplot(data = world) + 
+ geom_polygon(aes(x = long, y = lat, group = group, fill = region), color = "white") +
+ coord_quickmap() +
+ guides(fill = FALSE)
+```
+
+

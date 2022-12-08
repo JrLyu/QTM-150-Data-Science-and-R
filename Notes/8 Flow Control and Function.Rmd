@@ -1,12 +1,7 @@
 ---
 title: "Flow Control and Function"
+output: html_document
 date: "`r Sys.Date()`"
-output:
-  html_document: 
-    toc: true
-    toc_float:
-      collapsed: false
-      smooth_scroll: false
 ---
 
 ```{r setup, include=FALSE}
@@ -507,7 +502,7 @@ collection_mean <- function(list) {
 collection_mean(exams)
 ```
 
-## `map()` function in the purrr package
+## map() function in the purrr package
 
 The goal of using `purrr` functions instead of for loops is to allow you to break common list manipulation challenges into independent pieces:
 
@@ -560,7 +555,7 @@ exams %>%
 ```
 
 ***Example 5***:  Compute a final grade for each student, where the final grade is the average test score plus any `extra_credit` assigned to the student. Return the results as a double (i.e. numeric) vector.
-$\boxed{\text{Method 1}}$
+
 ```{r}
 final_grade <- function(list, y) {
   mean(list) + y
@@ -577,90 +572,5 @@ final_grade <- function(list, y) {
 
 map2(exams, extra_credit, final_grade)
 ```
-
-$\boxed{\text{Method 2}}$
-```{r}
-exams %>%
-  map(mean) %>%
-  map2(extra_credit, sum)
-```
-
-$\boxed{\text{Method 3}}$ The most efficient way. 
-```{r}
-map2_dbl(exams, extra_credit, function(x ,y) {mean(x) + y})
-```
-
-## `map()` works on a dataset
-
-***Example 1***: Compute the mean of every column in `mtcars`
-
-$\boxed{\text{Method 1}}$
-```{r}
-map_dbl(mtcars,mean)
-```
-
-$\boxed{\text{Method 2}}$
-```{r}
-.x<-mtcars[[1]]      # map understands . specially
-mean(.x)            # solve for single .x
-```
-
-```{r}
-map_dbl(mtcars, ~ mean(.x)) # generalize solution with map() function
-```
-
-***Example 2***: Fit the linear model for each piece of data.
-```{r}
-mtcars %>%
-  split(.$cyl) %>%
-  map(function(df) lm(mpg~wt, data = df))
-```
-
-***Shortcut***: `.` refers to the current list element (in the same way that i referred to the current index in the for loop).
-
-```{r}
-mtcars %>%
-  split(.$cyl) %>%
-  map(~lm(mpg~wt, data = .))
-```
-
-***Example 3***:
-```{r}
-mtcars %>%
-  split(.$cyl) %>%
-  map(~ggplot(., aes(wt, mpg))+geom_point())
-```
-
-***Example 4***: Compute the number of unique values in each column.
-```{r}
-.x<-iris[[1]]
-length(unique(.x))
-```
-
-```{r}
-map(iris, ~ length(unique(.x)))
-```
-
-***Example 5***: Fix the missing values: 
-```{r}
-df<- tibble(
-  a= c(rnorm(9), -99),
-  b<-c(-999, -99, rnorm(8))
-)
-
-df
-```
-
-```{r}
-fix_missing <- function(x) {
-  x[x == -99] <- NA
-  x
-}
-```
-
-```{r}
-map(df, fix_missing)
-```
-
 
 

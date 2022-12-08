@@ -1,0 +1,158 @@
+---
+title: "Final Project"
+author: "Group 15: Annie Cao, Turner Goetsch, Jiuru Lyu, Ben Zamler, Zhenyu Zou"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+---
+
+# Set up
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## Loading Packages
+```{r, include=FALSE}
+library(ggmap)
+library(lubridate)
+library(maps)
+library(plotly)
+library(shiny)
+library(tidyverse)
+```
+
+## Cleaning Data
+We want to investigate the the searches that is from the US, is using Expendia.com, is from not mobile site, and is not from a package research for a domestic hotel that is branded, has star rating above 4. The check-in and check-out dates should be within the summer vacation period (i.e., from June to August) in 2015. 
+```{r, eval=FALSE}
+data <- read_delim("data.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>%
+  drop_na() %>%
+  filter(user_location_country == "UNITED STATES OF AMERICA" & site_name == "EXPEDIA.COM" & is_mobile == 0 & is_package == 0 & hotel_country == "UNITED STATES OF AMERICA") %>%
+  filter(prop_is_branded == 1) %>%
+  filter(prop_starrating == 4 | prop_starrating == 5) %>%
+  mutate(srch_ci = ymd(srch_ci, tz = "America/New_York"), 
+         srch_co = ymd(srch_co, tz = "America/New_York")) %>%
+  filter(srch_ci %within% interval(ymd_hms("2015-06-01 00:00:00 EDT"), ymd_hms("2015-08-31 23:59:59 EDT")) & srch_co %within% interval(ymd_hms("2015-06-01 00:00:00 EDT"), ymd_hms("2015-08-31 23:59:59 EDT")))
+```
+
+```{r, eval=FALSE}
+write.csv(data, "new_data.csv")
+```
+
+## Importing Data Set
+```{r}
+# When re-opening this file, only run chunks after this. 
+data <- read.csv("new_data.csv")
+dest <- read_delim("dest.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE)
+state_pops <- read.csv("us-state-populations.csv")
+party <- read.csv("party.csv")
+```
+
+## Creating Sample Data Set
+
+```{r, eval=FALSE}
+sample_data <- data[sample(1:319911, 1000, replace = FALSE), ]
+```
+
+# Data Processing and Presentation
+Data Inclusion Criteria: 
+
+- US users
+- using `Expendia.com`
+- not from mobile site
+- not from a package research
+- searching for a domestic hotel
+- hotel is branded
+- hotel has a star rating above 4
+- check-in date from June 1st, 2015 to Augest 31st, 2015
+- check-out date from June 1st, 2015 to Augest 31st, 2015
+
+## Shiny App on the distribution of `popular_food_`
+```{r}
+food <- read.csv("new_data.csv") %>% 
+  filter(is_booking == 1) %>%
+  inner_join(dest, by = "srch_destination_id") %>%
+  pivot_longer(col = starts_with("popular_food"), names_to = "popular", values_to = "probability") %>%
+  select(popular, probability)
+
+names <- food %>%
+  distinct(popular)
+```
+
+
+```{r}
+ui <- fluidPage(
+    titlePanel("Compare Three Popular Scores"),
+    selectInput(inputId = "popular1", 
+                label = "Popular Score 1", 
+                choices = names), 
+    selectInput(inputId = "popular2", 
+                label = "Popular Score 2", 
+                choices = names), 
+    selectInput(inputId = "popular3", 
+                label = "Popular Score 3", 
+                choices = names), 
+    mainPanel(plotlyOutput(outputId = "boxplot"))
+)
+
+server <- function(input, output) {
+  output$boxplot <- renderPlotly({
+    food %>%
+      filter(popular == input$popular1 | popular == input$popular2 | popular == input$popular3) %>%
+        plot_ly(x = ~popular, y = ~probability, type = "box", color = ~popular, boxpoints = FALSE)
+    })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+```
+
+
+## Map showing the per mil of number of bookings per population in different states of US.
+
+```{r}
+map_data <- map_data("state") %>%
+  mutate(region = toupper(substr(region, 1, 2))) %>%
+  distinct(region, .keep_all = TRUE)
+```
+
+```{r}
+map <- data %>%
+  group_by(user_location_region) %>%
+  mutate(n = sum(is_booking)) %>%
+  select(user_location_region, n) %>%
+  distinct(user_location_region, .keep_all = TRUE) %>%
+  left_join(state_pops, by=c( "user_location_region" = "code")) %>%
+  mutate(rate = n / pop_2014 * 1000) %>%
+  left_join(party, by = c("user_location_region" = "state_code")) %>%
+  select(user_location_region, rate, party)
+```
+
+```{r}
+plot_geo(map, locationmode = "USA-states") %>%
+  add_trace(locations = ~user_location_region, type = "choropleth", z = ~rate, text = ~party, colorscale = "Reds")
+```
+
+## A heat map comparing `distance_band` and `hist_price_band` with regard to the number of bookings. 
+```{r}
+dat <- data %>%
+  select(distance_band, hist_price_band, is_booking) %>%
+  group_by(distance_band, hist_price_band) %>%
+  count(is_booking) %>%
+  filter(is_booking == 1)
+
+dat$distance_band <- factor(dat$distance_band, levels = c("VC", "C", "M", "F", "VF"))
+dat$hist_price_band <- factor(dat$hist_price_band, levels = c("VL", "L", "M", "H", "VH"))
+
+dat %>%
+  plot_ly(x = ~factor(distance_band), y = ~factor(hist_price_band), z = ~n, colorscale = "Reds") %>%
+  add_heatmap()
+```
+
+
+
+
+

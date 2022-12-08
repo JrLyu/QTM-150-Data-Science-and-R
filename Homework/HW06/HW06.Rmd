@@ -1,0 +1,92 @@
+---
+title: "HW06"
+author: "Jiuru Lyu"
+date: "`r Sys.Date()`"
+output: 
+ html_document: 
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Question 1
+
+**Write a greeting function that says “good morning,” “good afternoon,” or “good evening,” depending on the time of day.** (Hint: use a time argument that defaults to lubridate::now(). That will make it easier to test your function.)
+
+```{r}
+greeting <- function(time = lubridate::now()) {
+  if (time < 12) {
+    print("Good morning.")
+  } else if (time < 18) {
+    print("Good afternoon.")
+  } else {
+    print("Good evening.")
+  }
+}
+```
+
+# Question 2
+
+**Write a fizzbuzz function. It takes a single number as input. If the number is divisible by three, it returns “fizz”. If it’s divisible by five it returns “buzz”. If it’s divisible by three and five, it returns “fizzbuzz”. Otherwise, it returns the number.**
+
+```{r}
+fizzbuzz <- function(x) {
+  if (x %% 15 == 0) {
+    print("fizzbuzz")
+  } else if (x %% 3 == 0) {
+    print("fizz")
+  } else if (x %% 5 == 0) {
+    print("buzz")
+  } else {
+    return(x)
+  }
+}
+```
+
+# Question 3
+
+**For the following toy dataset exams in the lecture note, write a function that counts the best exam score twice and then takes the average for each student.**
+
+```{r}
+set.seed(1000)
+exams <- list(
+  student1 = round(runif(10, 50, 100)),
+  student2 = round(runif(10, 50, 100)),
+  student3 = round(runif(10, 50, 100)),
+  student4 = round(runif(10, 50, 100)),
+  student5 = round(runif(10, 50, 100))
+)
+
+exams
+```
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+final_grade <- function(x) {
+  g <- (sum(x) + max(x)) / (length(x) + 1)
+  return(g)
+}
+
+map_dbl(exams, final_grade)
+```
+
+# Question 4
+**For the toy dataset exams above, write a function that replace all the grades less than 70 with 70, and then take the average for each student.**
+
+```{r}
+grade_change <- function(x) {
+  ifelse(x >= 70, x, x <- 70)
+}
+
+exams %>%
+  map(grade_change) %>%
+  map_dbl(mean)
+```
