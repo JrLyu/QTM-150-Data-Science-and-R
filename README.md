@@ -13,7 +13,7 @@ There will be two (or many more) folders in this repository, named ***Notes*** a
 
 ## About the repository owner:
 
-I am a student at Emory University in the Class of 2026. I am intended to pursue a BS in Applied Mathematics and Statistics (AMS) with a double major of BA in Biology. I am creating this repository and using the GitHub platform not only to record my journey of learning but also to find people who share the same ambition with me, hoping to grow and learn together with people from all around the world. 
+I am a student at Emory University in the Class of 2026. I am intended to pursue a BS in Applied Mathematics and Statistics (AMS) with a minor in Computer Informatics. I am creating this repository and using the GitHub platform not only to record my journey of learning but also to find people who share the same ambition with me, hoping to grow and learn together with people from all around the world. 
 
 ## Contacting me:
 If you have any questions relating to any materials in this repository, feel free to leave a comment, or email me at <jiurulyu@gmail.com>.
